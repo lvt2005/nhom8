@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moji Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'moji-purple': '#8B5CF6',
+                        'moji-purple-dark': '#7C3AED',
+                    }
+                },
+                screens: {
+                    sm: "576px",
+                    md: "768px",
+                    lg: "992px",
+                    xl: "1216px",
+                    "2xl": "1216px",
+                },
+            },
+        };
+    </script>
+
+    <style>
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c4c4c4;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a0a0a0;
+        }
+
+        /* Dark mode scrollbar */
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #374151;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6b7280;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        /* Message animation */
+        .message-enter {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+        }
+
+        .message-enter:not(.message-enter) {
+            animation: messageSlideIn 0.3s ease-out forwards;
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 md:bg-gray-100 dark:md:bg-gray-900 transition-colors duration-300">
+<div class="flex h-screen overflow-hidden w-full">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="bg-white dark:bg-gray-900 w-full md:w-80 flex-shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700 transition-all duration-300 h-full">
+        <!-- Top Section: Logo & Toggle -->
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-2xl font-bold text-moji-purple dark:text-purple-400">Moji</h1>
+                <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <svg id="moonIcon" class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                    <svg id="sunIcon" class="w-5 h-5 text-yellow-500 hidden" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+            <button class="w-full bg-moji-purple dark:bg-purple-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-moji-purple-dark dark:hover:bg-purple-700 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span>Gửi Tin Nhắn Mới</span>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
+            <!-- NHÓM CHAT Section -->
+            <div class="px-4 py-3">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase">NHÓM CHAT</h2>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button id="createGroupBtn" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Tạo nhóm chat">
+                            <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Group Chat Items -->
+                <div class="space-y-2">
+                    <div class="group-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="group" data-id="test">
+                        <div class="flex items-start gap-3">
+                            <div class="flex -space-x-2">
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm border-2 border-white dark:border-gray-900 overflow-hidden" data-name="T" data-image="">
+                                    <span class="avatar-text flex">T</span>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt)txt.style.display='flex';})(this)">
+                                </div>
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                    <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                </div>
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                    <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0 relative">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate group-name flex-1" title="Nhóm Test">Nhóm Test</h3>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">3 thành viên</p>
+                                    <button class="group-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleGroupMenu(event, 'test')">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Group Menu Dropdown -->
+                                <div id="groupMenu-test" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                    <button class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="editGroup('test')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                        Chỉnh sửa nhóm
+                                    </button>
+                                    <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteGroup('test')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Xóa nhóm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="group-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="group" data-id="group2">
+                        <div class="flex items-start gap-3">
+                            <div class="flex -space-x-2">
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm border-2 border-white dark:border-gray-900 overflow-hidden" data-name="A" data-image="">
+                                    <span class="avatar-text flex">A</span>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt)txt.style.display='flex';})(this)">
+                                </div>
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                    <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                </div>
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                    <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0 relative">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate group-name flex-1" title="group2">group2</h3>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">3 thành viên</p>
+                                    <button class="group-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleGroupMenu(event, 'group2')">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Group Menu Dropdown -->
+                                <div id="groupMenu-group2" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                    <button class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="editGroup('group2')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                        Chỉnh sửa nhóm
+                                    </button>
+                                    <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteGroup('group2')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Xóa nhóm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="group-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="group" data-id="backend">
+                        <div class="flex items-start gap-3">
+                            <div class="flex -space-x-2">
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white dark:border-gray-900 overflow-hidden" data-name="" data-image="">
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="this.style.display='none';">
+                                </div>
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                    <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                </div>
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                    <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0 relative">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate group-name flex-1" title="Nhóm Backend Dev">Nhóm Backend Dev</h3>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">3 thành viên</p>
+                                    <button class="group-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleGroupMenu(event, 'backend')">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Group Menu Dropdown -->
+                                <div id="groupMenu-backend" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                    <button class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="editGroup('backend')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                        Chỉnh sửa nhóm
+                                    </button>
+                                    <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteGroup('backend')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Xóa nhóm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="group-item p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30 border-l-4 border-moji-purple dark:border-purple-400 cursor-pointer transition-colors active group" data-type="group" data-id="frontend">
+                        <div class="flex items-start gap-3">
+                            <div class="flex -space-x-2">
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white dark:border-gray-900 overflow-hidden" data-name="" data-image="">
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="this.style.display='none';">
+                                </div>
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                    <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                </div>
+                                <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                    <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0 relative">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate group-name flex-1" title="Nhóm Frontend Dev">Nhóm Frontend Dev</h3>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">3 thành viên</p>
+                                    <button class="group-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleGroupMenu(event, 'frontend')">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Group Menu Dropdown -->
+                                <div id="groupMenu-frontend" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                    <button class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="editGroup('frontend')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                        Chỉnh sửa nhóm
+                                    </button>
+                                    <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteGroup('frontend')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Xóa nhóm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BẠN BÈ Section -->
+            <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase">BẠN BÈ</h2>
+                    </div>
+                    <button id="addFriendBtn" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Kết bạn">
+                        <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Friend Items -->
+                <div class="space-y-2">
+                    <div class="friend-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="friend" data-id="tikcode" data-status="offline" data-name="M tikcode">
+                        <div class="flex items-start gap-3">
+                            <div class="relative flex-shrink-0">
+                                <div class="friend-avatar w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center overflow-hidden" data-name="M tikcode" data-image="">
+                                    <svg class="avatar-icon w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="this.style.display='none'; this.parentElement.querySelector('.avatar-icon').style.display='block';">
+                                </div>
+                                <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-gray-400 dark:bg-gray-500 rounded-full border-2 border-white dark:border-gray-900 status-dot"></div>
+                            </div>
+                            <div class="flex-1 min-w-0 relative">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate friend-name flex-1" title="M tikcode">M tikcode</h3>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">bla bla bla</p>
+                                    <button class="friend-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleFriendMenu(event, 'tikcode')">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Friend Menu Dropdown -->
+                                <div id="friendMenu-tikcode" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                    <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteFriend('tikcode')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Xóa bạn bè
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="friend-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="friend" data-id="maile" data-status="offline" data-name="Mai Lê">
+                        <div class="flex items-start gap-3">
+                            <div class="relative flex-shrink-0">
+                                <div class="friend-avatar w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center overflow-hidden" data-name="Mai Lê" data-image="">
+                                    <svg class="avatar-icon w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="this.style.display='none'; this.parentElement.querySelector('.avatar-icon').style.display='block';">
+                                </div>
+                                <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-gray-400 dark:bg-gray-500 rounded-full border-2 border-white dark:border-gray-900 status-dot"></div>
+                            </div>
+                            <div class="flex-1 min-w-0 relative">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate friend-name flex-1" title="Mai Lê">Mai Lê</h3>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">ko</p>
+                                    <button class="friend-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleFriendMenu(event, 'maile')">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Friend Menu Dropdown -->
+                                <div id="friendMenu-maile" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                    <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteFriend('maile')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Xóa bạn bè
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="friend-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="friend" data-id="annguyen" data-status="online" data-name="An Nguyễn">
+                        <div class="flex items-start gap-3">
+                            <div class="relative flex-shrink-0">
+                                <div class="friend-avatar w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center overflow-hidden" data-name="An Nguyễn" data-image="">
+                                    <svg class="avatar-icon w-6 h-6 text-white hidden" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="avatar-text text-white font-semibold text-sm">A</span>
+                                    <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="this.style.display='none'; if(this.parentElement.querySelector('.avatar-text')) { this.parentElement.querySelector('.avatar-text').style.display='flex'; } else { this.parentElement.querySelector('.avatar-icon').style.display='block'; }">
+                                </div>
+                                <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white dark:border-gray-900 status-dot"></div>
+                            </div>
+                            <div class="flex-1 min-w-0 relative">
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate friend-name flex-1" title="An Nguyễn">An Nguyễn</h3>
+                                    <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">hê an</p>
+                                    <button class="friend-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleFriendMenu(event, 'annguyen')">
+                                        <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Friend Menu Dropdown -->
+                                <div id="friendMenu-annguyen" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                    <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteFriend('annguyen')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Xóa bạn bè
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Profile Section -->
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 relative">
+            <div class="flex items-center gap-3 cursor-pointer" id="profileToggle">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate">User Một</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">user1</p>
+                </div>
+                <button id="profileSettingsBtn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Profile Dropdown Menu -->
+            <div id="profileDropdown" class="hidden absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                <!-- User Profile Section -->
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="openProfileSettings()">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate">User Một</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">user1</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Option -->
+                <div class="px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3" onclick="openProfileSettings()">
+                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <span class="text-gray-900 dark:text-gray-100">Tài Khoản</span>
+                </div>
+
+                <!-- Notifications Option -->
+                <div class="px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3" onclick="openNotificationsModal()">
+                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                    <span class="text-gray-900 dark:text-gray-100">Thông Báo</span>
+                </div>
+
+                <!-- Logout Option -->
+                <div class="px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 border-t border-gray-200 dark:border-gray-700" onclick="handleLogout()">
+                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span class="text-red-500 font-medium">Log out</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Default Empty State -->
+    <div id="defaultEmptyState" class="hidden md:flex flex-1 items-center justify-center bg-white dark:bg-gray-900">
+        <div class="text-center text-gray-400 dark:text-gray-500">
+            <svg class="w-24 h-24 mx-auto mb-6 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+            <h2 class="text-2xl font-semibold mb-2 text-gray-600 dark:text-gray-300">Chào mừng đến với Chat App</h2>
+            <p class="text-lg">Chọn một cuộc trò chuyện để bắt đầu</p>
+        </div>
+    </div>
+
+    <!-- Friend Chat Content Area (Desktop) -->
+    <div id="friendChatContent" class="hidden flex-1 bg-white dark:bg-gray-900 min-w-0 relative z-0 flex-col overflow-hidden">
+        <!-- Friend Chat Info Sidebar -->
+        <div id="friendChatInfoSidebar" class="absolute top-0 right-0 bottom-0 w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shadow-xl transform translate-x-full transition-transform duration-300 z-20 flex flex-col">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100">Thông tin hội thoại</h3>
+                <button onclick="toggleChatInfo()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="friendChatInfoContent" class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
+                <!-- Dynamic Content -->
+            </div>
+        </div>
+        <!-- Friend Chat Header -->
+        <div id="friendChatHeader" class="hidden p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div class="flex items-center gap-3">
+                <div id="friendChatHeaderAvatars" class="flex -space-x-2"></div>
+                <div class="flex-1 min-w-0">
+                    <h2 id="friendChatHeaderTitle" class="font-semibold text-gray-900 dark:text-gray-100 truncate"></h2>
+                    <p id="friendChatHeaderSubtitle" class="text-sm text-gray-500 dark:text-gray-400 truncate"></p>
+                </div>
+                <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" onclick="toggleChatInfo()">
+                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Friend Chat Messages Area -->
+        <div id="friendChatMessages" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
+            <div id="friendEmptyState" class="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500 h-full">
+                <div class="text-center">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <p class="text-lg dark:text-gray-400">Chọn một người bạn để bắt đầu</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Friend Chat Footer -->
+        <div id="friendChatFooter" class="hidden p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <input type="file" id="friendFileInput" class="hidden" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" onchange="handleFileUpload(event)">
+            <div class="flex items-end gap-3">
+                <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0" onclick="attachFile('friend')">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                    </svg>
+                </button>
+                <div class="flex-1 relative">
+                    <textarea id="friendMessageInput" rows="1" placeholder="Nhắn tin cho bạn bè..." class="w-full px-4 py-3 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white resize-none max-h-32" onkeypress="handleMessageKeyPress(event)" oninput="autoResizeTextarea(this)"></textarea>
+                    <button class="absolute right-2 bottom-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" onclick="insertEmoji('friend')">
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+                <button id="friendSendButton" class="p-3 rounded-lg bg-gradient-to-r from-moji-purple to-purple-600 dark:from-purple-600 dark:to-purple-700 text-white hover:from-moji-purple-dark hover:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800 transition-all flex-shrink-0" onclick="sendMessage()">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group Chat Content Area (Desktop) -->
+    <div id="groupChatContent" class="hidden flex-1 bg-white dark:bg-gray-900 min-w-0 relative z-0 flex-col overflow-hidden">
+        <!-- Group Chat Info Sidebar -->
+        <div id="groupChatInfoSidebar" class="absolute top-0 right-0 bottom-0 w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 shadow-xl transform translate-x-full transition-transform duration-300 z-20 flex flex-col">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h3 class="font-semibold text-gray-900 dark:text-gray-100">Thông tin nhóm</h3>
+                <button onclick="toggleChatInfo()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="groupChatInfoContent" class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
+                <!-- Dynamic Content -->
+            </div>
+        </div>
+        <!-- Group Chat Header -->
+        <div id="groupChatHeader" class="hidden p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div class="flex items-center gap-3">
+                <div id="groupChatHeaderAvatars" class="flex -space-x-2"></div>
+                <div class="flex-1 min-w-0">
+                    <h2 id="groupChatHeaderTitle" class="font-semibold text-gray-900 dark:text-gray-100 truncate"></h2>
+                    <p id="groupChatHeaderSubtitle" class="text-sm text-gray-500 dark:text-gray-400 truncate"></p>
+                </div>
+                <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" onclick="toggleChatInfo()">
+                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Group Chat Messages Area -->
+        <div id="groupChatMessages" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
+            <div id="groupEmptyState" class="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500 h-full">
+                <div class="text-center">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <p class="text-lg dark:text-gray-400">Chọn một nhóm để bắt đầu</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group Chat Footer -->
+        <div id="groupChatFooter" class="hidden p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <input type="file" id="groupFileInput" class="hidden" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" onchange="handleFileUpload(event)">
+            <div class="flex items-end gap-3">
+                <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0" onclick="attachFile('group')">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                    </svg>
+                </button>
+                <div class="flex-1 relative">
+                    <textarea id="groupMessageInput" rows="1" placeholder="Nhắn tin cho nhóm..." class="w-full px-4 py-3 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white resize-none max-h-32" onkeypress="handleMessageKeyPress(event)" oninput="autoResizeTextarea(this)"></textarea>
+                    <button class="absolute right-2 bottom-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" onclick="insertEmoji('group')">
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+                <button id="groupSendButton" class="p-3 rounded-lg bg-gradient-to-r from-moji-purple to-purple-600 dark:from-purple-600 dark:to-purple-700 text-white hover:from-moji-purple-dark hover:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800 transition-all flex-shrink-0" onclick="sendMessage()">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Friend Chat View -->
+    <div id="mobileFriendChatView" class="hidden md:hidden flex-1 bg-white dark:bg-gray-900 flex flex-col">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+            <button id="friendBackButton" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <div id="mobileFriendChatAvatars" class="flex -space-x-2"></div>
+            <div class="flex-1 min-w-0">
+                <h2 id="mobileFriendChatTitle" class="font-semibold text-gray-900 dark:text-gray-100 truncate"></h2>
+                <p id="mobileFriendChatSubtitle" class="text-sm text-gray-500 dark:text-gray-400 truncate"></p>
+            </div>
+        </div>
+        <div id="mobileFriendChatMessages" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4"></div>
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div class="flex items-end gap-3">
+                <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0" onclick="attachFile('friend')">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                    </svg>
+                </button>
+                <div class="flex-1 relative">
+                    <textarea id="mobileFriendMessageInput" rows="1" placeholder="Nhắn tin cho bạn bè..." class="w-full px-4 py-3 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white resize-none max-h-32" onkeypress="handleMobileMessageKeyPress(event)" oninput="autoResizeTextarea(this)"></textarea>
+                    <button class="absolute right-2 bottom-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" onclick="insertEmoji('friend')">
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+                <button class="p-3 rounded-lg bg-gradient-to-r from-moji-purple to-purple-600 dark:from-purple-600 dark:to-purple-700 text-white hover:from-moji-purple-dark hover:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800 transition-all flex-shrink-0" onclick="sendMobileMessage()">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Group Chat View -->
+    <div id="mobileGroupChatView" class="hidden md:hidden flex-1 bg-white dark:bg-gray-900 flex flex-col">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+            <button id="groupBackButton" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <div id="mobileGroupChatAvatars" class="flex -space-x-2"></div>
+            <div class="flex-1 min-w-0">
+                <h2 id="mobileGroupChatTitle" class="font-semibold text-gray-900 dark:text-gray-100 truncate"></h2>
+                <p id="mobileGroupChatSubtitle" class="text-sm text-gray-500 dark:text-gray-400 truncate"></p>
+            </div>
+        </div>
+        <div id="mobileGroupChatMessages" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4"></div>
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div class="flex items-end gap-3">
+                <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0" onclick="attachFile('group')">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                    </svg>
+                </button>
+                <div class="flex-1 relative">
+                    <textarea id="mobileGroupMessageInput" rows="1" placeholder="Nhắn tin cho nhóm..." class="w-full px-4 py-3 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white resize-none max-h-32" onkeypress="handleMobileMessageKeyPress(event)" oninput="autoResizeTextarea(this)"></textarea>
+                    <button class="absolute right-2 bottom-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" onclick="insertEmoji('group')">
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+                <button class="p-3 rounded-lg bg-gradient-to-r from-moji-purple to-purple-600 dark:from-purple-600 dark:to-purple-700 text-white hover:from-moji-purple-dark hover:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800 transition-all flex-shrink-0" onclick="sendMobileMessage()">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Overlay (Moved outside flex container) -->
+<div id="modalOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeAllModals()">
+    <!-- Add Friend Modal -->
+    <div id="addFriendModal" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md transform transition-all my-auto">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Kết Bạn</h2>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tìm bằng username</label>
+                <input type="text" id="friendUsernameInput" placeholder="Gõ tên username vào đây..." class="w-full px-4 py-2 border-2 border-moji-purple rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple dark:bg-gray-700 dark:text-white dark:border-purple-500">
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeAllModals()" class="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                    Cancel
+                </button>
+                <button onclick="searchFriend()" class="flex-1 px-4 py-2 bg-moji-purple dark:bg-purple-600 text-white rounded-lg hover:bg-moji-purple-dark dark:hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Tìm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Group Modal -->
+    <div id="createGroupModal" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md transform transition-all my-auto">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Tạo Nhóm Chat Mới</h2>
+                <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên nhóm</label>
+                <input type="text" id="groupNameInput" placeholder="Nhóm họp lớp" value="Nhóm họp lớp" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mời thành viên</label>
+                <input type="text" id="inviteMembersInput" placeholder="Tìm kiếm thành viên..." class="w-full px-4 py-2 border-2 border-moji-purple rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple dark:bg-gray-700 dark:text-white dark:border-purple-500 mb-3">
+                <div id="suggestedMembers" class="space-y-2">
+                    <div class="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer" onclick="toggleMemberSelection(this, 'annguyen')">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">A</div>
+                        <span class="flex-1 text-gray-900 dark:text-gray-100">An Nguyễn</span>
+                        <div class="member-check hidden text-moji-purple">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer" onclick="toggleMemberSelection(this, 'tikcode')">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <span class="flex-1 text-gray-900 dark:text-gray-100">M tikcode</span>
+                        <div class="member-check hidden text-moji-purple">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="createGroup()" class="w-full px-4 py-3 bg-gradient-to-r from-moji-purple to-purple-600 dark:from-purple-600 dark:to-purple-700 text-white rounded-lg hover:from-moji-purple-dark hover:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800 transition-all flex items-center justify-center gap-2 font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                Tạo nhóm
+            </button>
+        </div>
+    </div>
+
+    <!-- Profile & Settings Modal -->
+    <div id="profileSettingsModal" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl transform transition-all max-h-[90vh] overflow-y-auto my-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Profile & Settings</h2>
+            <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Profile Banner -->
+        <div class="relative bg-gradient-to-r from-purple-500 via-pink-500 to-purple-600 p-8">
+            <div class="flex items-center gap-6">
+                <div class="relative">
+                    <div id="profileBannerAvatar" class="w-24 h-24 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                        <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                        </svg>
+                        <img id="profileBannerAvatarImg" class="hidden w-full h-full object-cover" src="" alt="Avatar">
+                    </div>
+                    <label for="bannerAvatarUpload" class="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors shadow-lg">
+                        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <input type="file" id="bannerAvatarUpload" accept="image/*" class="hidden" onchange="handleBannerAvatarUpload(event)">
+                    </label>
+                </div>
+                <div class="flex-1 text-white">
+                    <h3 id="profileBannerName" class="text-3xl font-bold mb-2">User Một</h3>
+                    <p id="profileBannerBio" class="text-white/90 text-lg">Living life to the fullest ✨ Coffee lover ☕</p>
+                </div>
+                <div class="flex items-center gap-2 bg-green-500 px-4 py-2 rounded-full">
+                    <div class="w-2 h-2 bg-white rounded-full"></div>
+                    <span class="text-white font-medium">Online</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+            <button onclick="switchProfileTab('account')" id="tab-account" class="flex-1 px-6 py-4 font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border-b-2 border-moji-purple shadow-sm">
+                Tài Khoản
+            </button>
+            <button onclick="switchProfileTab('security')" id="tab-security" class="flex-1 px-6 py-4 font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+                Bảo Mật
+            </button>
+        </div>
+
+        <!-- Tab Content: Account -->
+        <div id="tabContent-account" class="p-6">
+            <div class="mb-6">
+                <div class="flex items-center gap-2 mb-2">
+                    <svg class="w-5 h-5 text-moji-purple" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                    </svg>
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Thông tin cá nhân</h3>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Cập nhật chi tiết cá nhân và thông tin hồ sơ của bạn</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left Column -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên hiển thị</label>
+                        <input type="text" id="profileNameInput" value="User Một" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                        <input type="email" id="profileEmailInput" value="user1@gmail.com" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Giới thiệu</label>
+                        <textarea id="profileBioInput" rows="3" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">Living life to the fullest ✨ Coffee lover ☕</textarea>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên người dùng</label>
+                        <input type="text" id="profileUsernameInput" value="user1" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Số điện thoại</label>
+                        <input type="tel" id="profilePhoneInput" value="" placeholder="Nhập số điện thoại" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="saveProfile()" class="mt-6 w-full px-6 py-3 bg-gradient-to-r from-moji-purple to-pink-500 text-white rounded-lg hover:from-moji-purple-dark hover:to-pink-600 transition-all font-medium">
+                Lưu thay đổi
+            </button>
+        </div>
+
+        <!-- Tab Content: Security -->
+        <div id="tabContent-security" class="hidden p-6">
+            <div class="flex flex-col items-center">
+                <div class="mb-6 text-center w-full max-w-md">
+                    <div class="flex items-center justify-center gap-2 mb-2">
+                        <svg class="w-5 h-5 text-moji-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Đổi mật khẩu</h3>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Cập nhật mật khẩu của bạn để bảo vệ tài khoản</p>
+                </div>
+
+                <div class="space-y-5 w-full max-w-md">
+                    <!-- Current Password -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mật khẩu hiện tại</label>
+                        <div class="relative">
+                            <input type="password" id="currentPassword" placeholder="Nhập mật khẩu hiện tại" class="w-full px-4 py-2 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+                            <button type="button" onclick="togglePasswordVisibility('currentPassword', 'currentPasswordToggle')" id="currentPasswordToggle" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- New Password -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mật khẩu mới</label>
+                        <div class="relative">
+                            <input type="password" id="newPassword" placeholder="Nhập mật khẩu mới" class="w-full px-4 py-2 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white" oninput="checkPasswordStrength(this.value)">
+                            <button type="button" onclick="togglePasswordVisibility('newPassword', 'newPasswordToggle')" id="newPasswordToggle" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <!-- Password Strength Indicator -->
+                        <div id="passwordStrength" class="mt-2 hidden">
+                            <div class="flex items-center gap-2 mb-1">
+                                <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div id="strengthBar" class="h-full transition-all duration-300 rounded-full"></div>
+                                </div>
+                                <span id="strengthText" class="text-xs font-medium"></span>
+                            </div>
+                            <div id="passwordRequirements" class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                                <div id="req-length" class="flex items-center gap-2">
+                                    <span class="req-icon">○</span>
+                                    <span>Ít nhất 8 ký tự</span>
+                                </div>
+                                <div id="req-uppercase" class="flex items-center gap-2">
+                                    <span class="req-icon">○</span>
+                                    <span>Có chữ hoa</span>
+                                </div>
+                                <div id="req-lowercase" class="flex items-center gap-2">
+                                    <span class="req-icon">○</span>
+                                    <span>Có chữ thường</span>
+                                </div>
+                                <div id="req-number" class="flex items-center gap-2">
+                                    <span class="req-icon">○</span>
+                                    <span>Có số</span>
+                                </div>
+                                <div id="req-special" class="flex items-center gap-2">
+                                    <span class="req-icon">○</span>
+                                    <span>Có ký tự đặc biệt (!@#$%^&*)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirm New Password -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Xác nhận mật khẩu mới</label>
+                        <div class="relative">
+                            <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu mới" class="w-full px-4 py-2 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white" oninput="checkPasswordMatch()">
+                            <button type="button" onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordToggle')" id="confirmPasswordToggle" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="passwordMatchMessage" class="mt-1 text-xs hidden"></div>
+                    </div>
+
+                    <button onclick="changePassword()" class="w-full px-6 py-3 bg-gradient-to-r from-moji-purple to-pink-500 text-white rounded-lg hover:from-moji-purple-dark hover:to-pink-600 transition-all font-medium">
+                        Đổi mật khẩu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Modal -->
+        <div id="notificationsModal" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md transform transition-all my-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Lời mời kết bạn</h2>
+                    <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex mb-4 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                    <button onclick="switchNotificationTab('received')" id="notifTab-received" class="flex-1 px-4 py-2 rounded-md font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 shadow-sm transition-all">
+                        Đã nhận
+                    </button>
+                    <button onclick="switchNotificationTab('sent')" id="notifTab-sent" class="flex-1 px-4 py-2 rounded-md font-medium text-gray-600 dark:text-gray-400 bg-purple-200 dark:bg-purple-900/30 transition-all">
+                        Đã gửi
+                    </button>
+                </div>
+
+                <!-- Tab Content: Received -->
+                <div id="notifContent-received" class="min-h-[200px] flex items-center justify-center">
+                    <p class="text-gray-700 dark:text-gray-300 text-base">Bạn chưa có lời mời kết bạn nào.</p>
+                </div>
+
+                <!-- Tab Content: Sent (Hidden by default) -->
+                <div id="notifContent-sent" class="hidden min-h-[200px] flex items-center justify-center">
+                    <p class="text-gray-700 dark:text-gray-300 text-base">Bạn chưa gửi lời mời kết bạn nào.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Group List Modal -->
+        <div id="groupListModal" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl transform transition-all my-auto max-h-[80vh] flex flex-col">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Danh sách nhóm</h2>
+                    <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+                <div id="groupListContent" class="space-y-3">
+                    <!-- Groups will be populated here dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State Variables ---
+        let currentChatId = null;
+        let currentChatType = null;
+        let messages = {};
+        let isDarkMode = false;
+        const selectedMembers = new Set();
+
+        // --- DOM Elements ---
+        const sidebar = document.getElementById('sidebar');
+        const themeToggle = document.getElementById('themeToggle');
+        const moonIcon = document.getElementById('moonIcon');
+        const sunIcon = document.getElementById('sunIcon');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const addFriendModal = document.getElementById('addFriendModal');
+        const createGroupModal = document.getElementById('createGroupModal');
+        const profileSettingsModal = document.getElementById('profileSettingsModal');
+        const notificationsModal = document.getElementById('notificationsModal');
+        const groupListModal = document.getElementById('groupListModal');
+        const addFriendBtn = document.getElementById('addFriendBtn');
+        const createGroupBtn = document.getElementById('createGroupBtn');
+        const profileSettingsBtn = document.getElementById('profileSettingsBtn');
+        const profileToggle = document.getElementById('profileToggle');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        // --- Theme Logic ---
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            isDarkMode = true;
+            document.documentElement.classList.add('dark');
+            moonIcon.classList.add('hidden');
+            sunIcon.classList.remove('hidden');
+            document.body.classList.add('dark', 'bg-gray-900');
+        } else {
+            document.body.classList.add('bg-gray-100');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.body.classList.remove('bg-gray-100');
+                document.body.classList.add('bg-gray-900');
+                moonIcon.classList.add('hidden');
+                sunIcon.classList.remove('hidden');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('bg-gray-900');
+                document.body.classList.add('bg-gray-100');
+                moonIcon.classList.remove('hidden');
+                sunIcon.classList.add('hidden');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // --- Modal Functions ---
+        function openModal(modalId) {
+            modalOverlay.classList.remove('hidden');
+            document.getElementById(modalId).classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAllModals() {
+            modalOverlay.classList.add('hidden');
+            addFriendModal.classList.add('hidden');
+            createGroupModal.classList.add('hidden');
+            profileSettingsModal.classList.add('hidden');
+            notificationsModal.classList.add('hidden');
+            groupListModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // --- Event Listeners for Modals ---
+        addFriendBtn.addEventListener('click', () => openModal('addFriendModal'));
+        createGroupBtn.addEventListener('click', () => openModal('createGroupModal'));
+
+        profileToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+
+        profileSettingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!profileToggle.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.add('hidden');
+            }
+            // Close menus when clicking outside
+            if (!e.target.closest('.group-menu-btn') && !e.target.closest('[id^="groupMenu-"]')) {
+                document.querySelectorAll('[id^="groupMenu-"]').forEach(menu => {
+                    menu.classList.add('hidden');
+                });
+            }
+            if (!e.target.closest('.friend-menu-btn') && !e.target.closest('[id^="friendMenu-"]')) {
+                document.querySelectorAll('[id^="friendMenu-"]').forEach(menu => {
+                    menu.classList.add('hidden');
+                });
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAllModals();
+            }
+        });
+
+        function openProfileSettings() {
+            profileDropdown.classList.add('hidden');
+            openModal('profileSettingsModal');
+        }
+
+        function openNotificationsModal() {
+            profileDropdown.classList.add('hidden');
+            openModal('notificationsModal');
+        }
+
+        function handleLogout() {
+            profileDropdown.classList.add('hidden');
+            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                alert('Đăng xuất thành công!');
+            }
+        }
+
+        // --- Chat Logic ---
+        function isMobile() {
+            return window.innerWidth < 768;
+        }
+
+        // Initialize Group Items Click Listeners
+        const groupItems = document.querySelectorAll('.group-item, .friend-item');
+        groupItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const chatId = item.getAttribute('data-id');
+                const chatType = item.getAttribute('data-type');
+
+                // Check if clicking the already active chat
+                if (currentChatId === chatId && currentChatType === chatType) {
+                    // Toggle OFF
+                    currentChatId = null;
+                    currentChatType = null;
+
+                    // Remove active class from all
+                    groupItems.forEach(i => {
+                        i.classList.remove('bg-purple-50', 'dark:bg-purple-900/30', 'border-l-4', 'border-moji-purple', 'dark:border-purple-400', 'active');
+                    });
+
+                    // Hide all chat contents
+                    const friendContent = document.getElementById('friendChatContent');
+                    const groupContent = document.getElementById('groupChatContent');
+
+                    friendContent.classList.add('hidden');
+                    friendContent.classList.remove('flex');
+
+                    groupContent.classList.add('hidden');
+                    groupContent.classList.remove('flex');
+
+                    // Show default empty state (desktop only)
+                    if (!isMobile()) {
+                        const defaultEmptyState = document.getElementById('defaultEmptyState');
+                        if (defaultEmptyState) {
+                            defaultEmptyState.classList.remove('hidden');
+                            defaultEmptyState.classList.add('md:flex'); // Restore md:flex
+                        }
+                    }
+
+                    return; // Stop here
+                }
+
+                currentChatId = chatId;
+                currentChatType = chatType;
+
+                groupItems.forEach(i => {
+                    i.classList.remove('bg-purple-50', 'dark:bg-purple-900/30', 'border-l-4', 'border-moji-purple', 'dark:border-purple-400', 'active');
+                });
+
+                item.classList.add('bg-purple-50', 'dark:bg-purple-900/30', 'border-l-4', 'border-moji-purple', 'dark:border-purple-400', 'active');
+
+                if (isMobile()) {
+                    loadMobileChatView(item);
+                } else {
+                    loadDesktopChatView(item);
+                }
+            });
+        });
+
+
+
+        // Add listeners for new back buttons
+        document.getElementById('friendBackButton').addEventListener('click', () => {
+            sidebar.classList.remove('hidden');
+            document.getElementById('mobileFriendChatView').classList.add('hidden');
+            currentChatId = null;
+            currentChatType = null;
+        });
+        document.getElementById('groupBackButton').addEventListener('click', () => {
+            sidebar.classList.remove('hidden');
+            document.getElementById('mobileGroupChatView').classList.add('hidden');
+            currentChatId = null;
+            currentChatType = null;
+        });
+
+        function loadDesktopChatView(item) {
+            const title = item.querySelector('h3').textContent;
+            const chatType = item.getAttribute('data-type');
+            const chatId = item.getAttribute('data-id');
+
+            const friendContent = document.getElementById('friendChatContent');
+            const groupContent = document.getElementById('groupChatContent');
+            const defaultEmptyState = document.getElementById('defaultEmptyState');
+
+            // Hide all first
+            friendContent.classList.add('hidden');
+            friendContent.classList.remove('flex'); // Ensure flex is removed
+
+            groupContent.classList.add('hidden');
+            groupContent.classList.remove('flex'); // Ensure flex is removed
+
+            if (defaultEmptyState) {
+                defaultEmptyState.classList.add('hidden');
+                defaultEmptyState.classList.remove('md:flex'); // Important: remove md:flex to hide on desktop
+            }
+
+            if (chatType === 'group') {
+                groupContent.classList.remove('hidden');
+                groupContent.classList.add('flex'); // Add flex for layout
+
+                document.getElementById('groupChatHeader').classList.remove('hidden');
+                document.getElementById('groupChatFooter').classList.remove('hidden');
+                document.getElementById('groupEmptyState').style.display = 'none';
+                document.getElementById('groupChatHeaderTitle').textContent = title;
+
+                const avatarsContainer = document.getElementById('groupChatHeaderAvatars');
+                avatarsContainer.innerHTML = '';
+                const avatars = item.querySelectorAll('.group-avatar');
+                avatars.forEach(avatar => {
+                    const clonedAvatar = avatar.cloneNode(true);
+                    clonedAvatar.className = 'w-10 h-10 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center flex-shrink-0 bg-gradient-to-br ' +
+                        (avatar.classList.contains('from-blue-400') ? 'from-blue-400 to-blue-600' :
+                            avatar.classList.contains('from-green-400') ? 'from-green-400 to-green-600' :
+                                'from-purple-400 to-purple-600');
+                    avatarsContainer.appendChild(clonedAvatar);
+                });
+                const memberCount = item.querySelector('p.text-xs')?.textContent || '0 thành viên';
+                document.getElementById('groupChatHeaderSubtitle').textContent = memberCount;
+
+            } else {
+                friendContent.classList.remove('hidden');
+                friendContent.classList.add('flex'); // Add flex for layout
+
+                document.getElementById('friendChatHeader').classList.remove('hidden');
+                document.getElementById('friendChatFooter').classList.remove('hidden');
+                document.getElementById('friendEmptyState').style.display = 'none';
+                document.getElementById('friendChatHeaderTitle').textContent = title;
+
+                const avatarsContainer = document.getElementById('friendChatHeaderAvatars');
+                avatarsContainer.innerHTML = '';
+                const avatar = item.querySelector('.friend-avatar');
+                const clonedAvatar = avatar.cloneNode(true);
+                clonedAvatar.className = 'w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br ' +
+                    (avatar.classList.contains('from-yellow-400') ? 'from-yellow-400 to-yellow-600' :
+                        avatar.classList.contains('from-purple-400') ? 'from-purple-400 to-purple-600' :
+                            'from-blue-400 to-blue-600');
+                avatarsContainer.appendChild(clonedAvatar);
+
+                const status = item.getAttribute('data-status');
+                document.getElementById('friendChatHeaderSubtitle').textContent = status === 'online' ? 'Đang hoạt động' : 'Không hoạt động';
+            }
+
+            loadMessages(chatId);
+        }
+
+        function loadMobileChatView(item) {
+            const title = item.querySelector('h3').textContent;
+            const chatType = item.getAttribute('data-type');
+            const chatId = item.getAttribute('data-id');
+
+            sidebar.classList.add('hidden');
+            const friendView = document.getElementById('mobileFriendChatView');
+            const groupView = document.getElementById('mobileGroupChatView');
+
+            friendView.classList.add('hidden');
+            groupView.classList.add('hidden');
+
+            if (chatType === 'group') {
+                groupView.classList.remove('hidden');
+                document.getElementById('mobileGroupChatTitle').textContent = title;
+
+                const avatarsContainer = document.getElementById('mobileGroupChatAvatars');
+                avatarsContainer.innerHTML = '';
+                const avatars = item.querySelectorAll('.group-avatar');
+                let count = 0;
+                avatars.forEach(avatar => {
+                    if (count < 2) {
+                        const clonedAvatar = avatar.cloneNode(true);
+                        clonedAvatar.className = 'w-8 h-8 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center flex-shrink-0 bg-gradient-to-br ' +
+                            (avatar.classList.contains('from-blue-400') ? 'from-blue-400 to-blue-600' :
+                                avatar.classList.contains('from-green-400') ? 'from-green-400 to-green-600' :
+                                    'from-purple-400 to-purple-600');
+                        avatarsContainer.appendChild(clonedAvatar);
+                        count++;
+                    }
+                });
+                const memberCount = item.querySelector('p.text-xs')?.textContent || '0 thành viên';
+                document.getElementById('mobileGroupChatSubtitle').textContent = memberCount;
+            } else {
+                friendView.classList.remove('hidden');
+                document.getElementById('mobileFriendChatTitle').textContent = title;
+
+                const avatarsContainer = document.getElementById('mobileFriendChatAvatars');
+                avatarsContainer.innerHTML = '';
+                const avatar = item.querySelector('.friend-avatar');
+                const clonedAvatar = avatar.cloneNode(true);
+                clonedAvatar.className = 'w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br ' +
+                    (avatar.classList.contains('from-yellow-400') ? 'from-yellow-400 to-yellow-600' :
+                        avatar.classList.contains('from-purple-400') ? 'from-purple-400 to-purple-600' :
+                            'from-blue-400 to-blue-600');
+                avatarsContainer.appendChild(clonedAvatar);
+
+                const status = item.getAttribute('data-status');
+                document.getElementById('mobileFriendChatSubtitle').textContent = status === 'online' ? 'Đang hoạt động' : 'Không hoạt động';
+            }
+
+            loadMobileMessages(chatId);
+        }
+
+        function loadMessages(chatId) {
+            const targetId = currentChatType === 'group' ? 'groupChatMessages' : 'friendChatMessages';
+            const chatMessages = document.getElementById(targetId);
+            chatMessages.innerHTML = '';
+
+            if (!messages[chatId] || messages[chatId].length === 0) {
+                chatMessages.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 dark:text-gray-500"><p>Chưa có tin nhắn nào</p></div>';
+                return;
+            }
+
+            messages[chatId].forEach(msg => {
+                appendMessageToDesktop(msg, false);
+            });
+
+            scrollToBottom(targetId);
+        }
+
+        function loadMobileMessages(chatId) {
+            const targetId = currentChatType === 'group' ? 'mobileGroupChatMessages' : 'mobileFriendChatMessages';
+            const mobileChatMessages = document.getElementById(targetId);
+            mobileChatMessages.innerHTML = '';
+
+            if (!messages[chatId] || messages[chatId].length === 0) {
+                mobileChatMessages.innerHTML = '<div class="flex items-center justify-center h-full text-gray-400 dark:text-gray-500"><p>Chưa có tin nhắn nào</p></div>';
+                return;
+            }
+
+            messages[chatId].forEach(msg => {
+                appendMessageToMobile(msg, false);
+            });
+
+            scrollToBottom(targetId);
+        }
+
+        function appendMessageToDesktop(message, animate = true) {
+            const targetId = currentChatType === 'group' ? 'groupChatMessages' : 'friendChatMessages';
+            const chatMessages = document.getElementById(targetId);
+            const emptyMsg = chatMessages.querySelector('div.flex.items-center.justify-center');
+            if (emptyMsg) emptyMsg.remove();
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${message.isSent ? 'justify-end' : 'justify-start'} ${animate ? 'message-enter' : ''}`;
+
+            let contentHtml = '';
+            if (message.attachment) {
+                if (message.attachment.type === 'image') {
+                    contentHtml = `<img src="${message.attachment.url}" class="max-w-xs rounded-lg cursor-pointer hover:opacity-90 transition-opacity mb-2" onclick="window.open(this.src)">`;
+                } else if (message.attachment.type === 'video') {
+                    contentHtml = `<video src="${message.attachment.url}" controls class="max-w-xs rounded-lg mb-2"></video>`;
+                } else {
+                    contentHtml = `
+                        <div class="flex items-center gap-2 bg-white/20 p-2 rounded-lg mb-2 backdrop-blur-sm border border-white/10">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium truncate">${message.attachment.name}</p>
+                                <p class="text-xs opacity-70">${message.attachment.size}</p>
+                            </div>
+                        </div>`;
+                }
+            }
+            if (message.text) {
+                contentHtml += `<p class="text-sm break-words">${escapeHtml(message.text)}</p>`;
+            }
+
+            if (message.isSent) {
+                messageDiv.innerHTML = `
+                        <div class="flex items-end gap-2 max-w-[70%]">
+                            <div class="bg-gradient-to-r from-moji-purple to-purple-600 text-white rounded-2xl rounded-br-sm px-4 py-2 shadow-sm">
+                                ${contentHtml}
+                                <span class="text-xs text-white/70 mt-1 block">${message.time}</span>
+                            </div>
+                        </div>
+                    `;
+            } else {
+                let receivedContentHtml = contentHtml;
+                if (message.attachment && message.attachment.type === 'file') {
+                    receivedContentHtml = `
+                        <div class="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded-lg mb-2">
+                            <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium truncate">${message.attachment.name}</p>
+                                <p class="text-xs text-gray-500">${message.attachment.size}</p>
+                            </div>
+                        </div>`;
+                    if (message.text) receivedContentHtml += `<p class="text-sm break-words">${escapeHtml(message.text)}</p>`;
+                } else if (message.attachment) {
+                    // For images/videos received, we just use the contentHtml but wrapped differently if needed?
+                    // Actually contentHtml for image/video is just the tag, so it's fine.
+                } else {
+                    receivedContentHtml = `<p class="text-sm break-words">${escapeHtml(message.text)}</p>`;
+                }
+
+                messageDiv.innerHTML = `
+                        <div class="flex items-end gap-2 max-w-[70%]">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                                ${message.sender.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">${escapeHtml(message.sender)}</p>
+                                <div class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-2xl rounded-bl-sm px-4 py-2 shadow-sm">
+                                    ${receivedContentHtml}
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block">${message.time}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            }
+            chatMessages.appendChild(messageDiv);
+            if (animate) {
+                setTimeout(() => {
+                    messageDiv.classList.remove('message-enter');
+                }, 10);
+            }
+        }
+
+        function appendMessageToMobile(message, animate = true) {
+            const targetId = currentChatType === 'group' ? 'mobileGroupChatMessages' : 'mobileFriendChatMessages';
+            const mobileChatMessages = document.getElementById(targetId);
+            const emptyMsg = mobileChatMessages.querySelector('div.flex.items-center.justify-center');
+            if (emptyMsg) emptyMsg.remove();
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${message.isSent ? 'justify-end' : 'justify-start'} ${animate ? 'message-enter' : ''}`;
+
+            let contentHtml = '';
+            if (message.attachment) {
+                if (message.attachment.type === 'image') {
+                    contentHtml = `<img src="${message.attachment.url}" class="max-w-xs rounded-lg cursor-pointer hover:opacity-90 transition-opacity mb-2" onclick="window.open(this.src)">`;
+                } else if (message.attachment.type === 'video') {
+                    contentHtml = `<video src="${message.attachment.url}" controls class="max-w-xs rounded-lg mb-2"></video>`;
+                } else {
+                    contentHtml = `
+                        <div class="flex items-center gap-2 bg-white/20 p-2 rounded-lg mb-2 backdrop-blur-sm border border-white/10">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium truncate">${message.attachment.name}</p>
+                                <p class="text-xs opacity-70">${message.attachment.size}</p>
+                            </div>
+                        </div>`;
+                }
+            }
+            if (message.text) {
+                contentHtml += `<p class="text-sm break-words">${escapeHtml(message.text)}</p>`;
+            }
+
+            if (message.isSent) {
+                messageDiv.innerHTML = `
+                        <div class="flex items-end gap-2 max-w-[70%]">
+                            <div class="bg-gradient-to-r from-moji-purple to-purple-600 text-white rounded-2xl rounded-br-sm px-4 py-2 shadow-sm">
+                                ${contentHtml}
+                                <span class="text-xs text-white/70 mt-1 block">${message.time}</span>
+                            </div>
+                        </div>
+                    `;
+            } else {
+                let receivedContentHtml = contentHtml;
+                if (message.attachment && message.attachment.type === 'file') {
+                    receivedContentHtml = `
+                        <div class="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded-lg mb-2">
+                            <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-medium truncate">${message.attachment.name}</p>
+                                <p class="text-xs text-gray-500">${message.attachment.size}</p>
+                            </div>
+                        </div>`;
+                    if (message.text) receivedContentHtml += `<p class="text-sm break-words">${escapeHtml(message.text)}</p>`;
+                } else if (message.attachment) {
+                    // For images/videos received, we just use the contentHtml but wrapped differently if needed?
+                    // Actually contentHtml for image/video is just the tag, so it's fine.
+                } else {
+                    receivedContentHtml = `<p class="text-sm break-words">${escapeHtml(message.text)}</p>`;
+                }
+
+                messageDiv.innerHTML = `
+                        <div class="flex items-end gap-2 max-w-[70%]">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-xs flex-shrink-0">
+                                ${message.sender.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">${escapeHtml(message.sender)}</p>
+                                <div class="bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-2xl rounded-bl-sm px-4 py-2 shadow-sm">
+                                    ${receivedContentHtml}
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block">${message.time}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            }
+            mobileChatMessages.appendChild(messageDiv);
+            if (animate) {
+                setTimeout(() => {
+                    messageDiv.classList.remove('message-enter');
+                }, 10);
+            }
+        }
+
+        function sendMessage() {
+            const inputId = currentChatType === 'group' ? 'groupMessageInput' : 'friendMessageInput';
+            const input = document.getElementById(inputId);
+            const text = input.value.trim();
+            if (!text || !currentChatId) return;
+
+            const message = {
+                text: text,
+                time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                isSent: true,
+                sender: 'Bạn'
+            };
+
+            if (!messages[currentChatId]) {
+                messages[currentChatId] = [];
+            }
+
+            messages[currentChatId].push(message);
+            appendMessageToDesktop(message, true);
+
+            input.value = '';
+            input.style.height = 'auto';
+            scrollToBottom(currentChatType === 'group' ? 'groupChatMessages' : 'friendChatMessages');
+            updateLastMessageTime(currentChatId);
+        }
+
+        function sendMobileMessage() {
+            const inputId = currentChatType === 'group' ? 'mobileGroupMessageInput' : 'mobileFriendMessageInput';
+            const input = document.getElementById(inputId);
+            const text = input.value.trim();
+            if (!text || !currentChatId) return;
+
+            const message = {
+                text: text,
+                time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                isSent: true,
+                sender: 'Bạn'
+            };
+
+            if (!messages[currentChatId]) {
+                messages[currentChatId] = [];
+            }
+
+            messages[currentChatId].push(message);
+            appendMessageToMobile(message, true);
+
+            input.value = '';
+            input.style.height = 'auto';
+            scrollToBottom(currentChatType === 'group' ? 'mobileGroupChatMessages' : 'mobileFriendChatMessages');
+            updateLastMessageTime(currentChatId);
+        }
+
+        function handleMessageKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function handleMobileMessageKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMobileMessage();
+            }
+        }
+
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
+        }
+
+        function scrollToBottom(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                setTimeout(() => {
+                    element.scrollTop = element.scrollHeight;
+                }, 100);
+            }
+        }
+
+        function updateLastMessageTime(chatId) {
+            const item = document.querySelector(`[data-id="${chatId}"]`);
+            if (item) {
+                const timeElement = item.querySelector('.time-display');
+                if (timeElement) {
+                    const now = new Date().getTime();
+                    timeElement.setAttribute('data-timestamp', now);
+                    timeElement.textContent = formatTimeAgo(now);
+                }
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return '';
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diffInSeconds = Math.floor((now - time) / 1000);
+
+            if (diffInSeconds < 60) {
+                return diffInSeconds + 's';
+            } else if (diffInSeconds < 3600) {
+                const minutes = Math.floor(diffInSeconds / 60);
+                return minutes + 'm';
+            } else if (diffInSeconds < 86400) {
+                const hours = Math.floor(diffInSeconds / 3600);
+                return hours + 'h';
+            } else {
+                const days = Math.floor(diffInSeconds / 86400);
+                return days + 'd';
+            }
+        }
+
+        // --- Other Functions (Menus, Profile, etc.) ---
+        function toggleGroupMenu(event, groupId) {
+            event.stopPropagation();
+            const menu = document.getElementById(`groupMenu-${groupId}`);
+            const allMenus = document.querySelectorAll('[id^="groupMenu-"]');
+            allMenus.forEach(m => {
+                if (m.id !== `groupMenu-${groupId}`) {
+                    m.classList.add('hidden');
+                }
+            });
+            menu.classList.toggle('hidden');
+        }
+
+        function toggleFriendMenu(event, friendId) {
+            event.stopPropagation();
+            const menu = document.getElementById(`friendMenu-${friendId}`);
+            const allMenus = document.querySelectorAll('[id^="friendMenu-"]');
+            allMenus.forEach(m => {
+                if (m.id !== `friendMenu-${friendId}`) {
+                    m.classList.add('hidden');
+                }
+            });
+            menu.classList.toggle('hidden');
+        }
+
+        function editGroup(groupId) {
+            const menu = document.getElementById(`groupMenu-${groupId}`);
+            menu.classList.add('hidden');
+            alert('Chức năng chỉnh sửa nhóm đang được phát triển');
+        }
+
+        function deleteGroup(groupId) {
+            const menu = document.getElementById(`groupMenu-${groupId}`);
+            menu.classList.add('hidden');
+            if (confirm('Bạn có chắc chắn muốn xóa nhóm này?')) {
+                const item = document.querySelector(`[data-type="group"][data-id="${groupId}"]`);
+                if (item) item.remove();
+                if (currentChatId === groupId) {
+                    document.getElementById('friendChatContent').classList.add('hidden');
+                    document.getElementById('groupChatContent').classList.add('hidden');
+                    currentChatId = null;
+                }
+            }
+        }
+
+        function deleteFriend(friendId) {
+            const menu = document.getElementById(`friendMenu-${friendId}`);
+            menu.classList.add('hidden');
+            if (confirm('Bạn có chắc chắn muốn xóa bạn bè này?')) {
+                const item = document.querySelector(`[data-type="friend"][data-id="${friendId}"]`);
+                if (item) item.remove();
+                if (currentChatId === friendId) {
+                    document.getElementById('friendChatContent').classList.add('hidden');
+                    document.getElementById('groupChatContent').classList.add('hidden');
+                    currentChatId = null;
+                }
+            }
+        }
+
+        function searchFriend() {
+            const username = document.getElementById('friendUsernameInput').value.trim();
+            if (username) {
+                alert(`Đang tìm kiếm: ${username}`);
+                closeAllModals();
+            }
+        }
+
+        function toggleMemberSelection(element, memberId) {
+            const checkIcon = element.querySelector('.member-check');
+            if (selectedMembers.has(memberId)) {
+                selectedMembers.delete(memberId);
+                checkIcon.classList.add('hidden');
+                element.classList.remove('bg-purple-50', 'dark:bg-purple-900/20');
+            } else {
+                selectedMembers.add(memberId);
+                checkIcon.classList.remove('hidden');
+                element.classList.add('bg-purple-50', 'dark:bg-purple-900/20');
+            }
+        }
+
+        function createGroup() {
+            const groupName = document.getElementById('groupNameInput').value.trim();
+            if (groupName && selectedMembers.size > 0) {
+                alert(`Đã tạo nhóm: ${groupName} với ${selectedMembers.size} thành viên`);
+                closeAllModals();
+                selectedMembers.clear();
+            } else {
+                alert('Vui lòng nhập tên nhóm và chọn ít nhất một thành viên');
+            }
+        }
+
+        function switchProfileTab(tabName) {
+            document.getElementById('tabContent-account').classList.add('hidden');
+            document.getElementById('tabContent-security').classList.add('hidden');
+            document.getElementById('tab-account').classList.remove('border-b-2', 'border-moji-purple', 'bg-white', 'dark:bg-gray-800');
+            document.getElementById('tab-security').classList.remove('border-b-2', 'border-moji-purple', 'bg-white', 'dark:bg-gray-800');
+            document.getElementById('tab-account').classList.add('text-gray-600', 'dark:text-gray-400');
+            document.getElementById('tab-security').classList.add('text-gray-600', 'dark:text-gray-400');
+
+            document.getElementById(`tabContent-${tabName}`).classList.remove('hidden');
+            const activeTab = document.getElementById(`tab-${tabName}`);
+            activeTab.classList.add('border-b-2', 'border-moji-purple', 'bg-white', 'dark:bg-gray-800');
+            activeTab.classList.remove('text-gray-600', 'dark:text-gray-400');
+        }
+
+        function saveProfile() {
+            alert('Đã lưu thông tin hồ sơ!');
+        }
+
+        function togglePasswordVisibility(inputId, toggleId) {
+            const input = document.getElementById(inputId);
+            const toggle = document.getElementById(toggleId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggle.classList.add('text-moji-purple');
+            } else {
+                input.type = 'password';
+                toggle.classList.remove('text-moji-purple');
+            }
+        }
+
+        function checkPasswordStrength(password) {
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+            const strengthDiv = document.getElementById('passwordStrength');
+
+            if (password.length > 0) {
+                strengthDiv.classList.remove('hidden');
+            } else {
+                strengthDiv.classList.add('hidden');
+                return;
+            }
+
+            const hasLength = password.length >= 8;
+            const hasUpper = /[A-Z]/.test(password);
+            const hasLower = /[a-z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSpecial = /[!@#$%^&*]/.test(password);
+
+            updateRequirement('req-length', hasLength);
+            updateRequirement('req-uppercase', hasUpper);
+            updateRequirement('req-lowercase', hasLower);
+            updateRequirement('req-number', hasNumber);
+            updateRequirement('req-special', hasSpecial);
+
+            let strength = 0;
+            if (hasLength) strength++;
+            if (hasUpper) strength++;
+            if (hasLower) strength++;
+            if (hasNumber) strength++;
+            if (hasSpecial) strength++;
+
+            let color = 'bg-red-500';
+            let text = 'Yếu';
+            let width = '20%';
+
+            if (strength >= 5) {
+                color = 'bg-green-500';
+                text = 'Mạnh';
+                width = '100%';
+            } else if (strength >= 3) {
+                color = 'bg-yellow-500';
+                text = 'Trung bình';
+                width = '60%';
+            }
+
+            strengthBar.className = `h-full transition-all duration-300 rounded-full ${color}`;
+            strengthBar.style.width = width;
+            strengthText.textContent = text;
+            strengthText.className = `text-xs font-medium ${color.replace('bg-', 'text-')}`;
+        }
+
+        function updateRequirement(id, isValid) {
+            const el = document.getElementById(id);
+            const icon = el.querySelector('.req-icon');
+            if (isValid) {
+                el.classList.remove('text-gray-600', 'dark:text-gray-400');
+                el.classList.add('text-green-500');
+                icon.textContent = '✓';
+            } else {
+                el.classList.add('text-gray-600', 'dark:text-gray-400');
+                el.classList.remove('text-green-500');
+                icon.textContent = '○';
+            }
+        }
+
+        function checkPasswordMatch() {
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            const msg = document.getElementById('passwordMatchMessage');
+
+            if (confirmPass.length > 0) {
+                msg.classList.remove('hidden');
+                if (newPass === confirmPass) {
+                    msg.textContent = 'Mật khẩu khớp';
+                    msg.className = 'mt-1 text-xs text-green-500';
+                } else {
+                    msg.textContent = 'Mật khẩu không khớp';
+                    msg.className = 'mt-1 text-xs text-red-500';
+                }
+            } else {
+                msg.classList.add('hidden');
+            }
+        }
+
+        function changePassword() {
+            alert('Đổi mật khẩu thành công!');
+        }
+
+        function switchNotificationTab(tabName) {
+            document.getElementById('notifContent-received').classList.add('hidden');
+            document.getElementById('notifContent-sent').classList.add('hidden');
+            document.getElementById('notifTab-received').classList.remove('bg-white', 'dark:bg-gray-800', 'shadow-sm', 'text-gray-900', 'dark:text-gray-100');
+            document.getElementById('notifTab-sent').classList.remove('bg-white', 'dark:bg-gray-800', 'shadow-sm', 'text-gray-900', 'dark:text-gray-100');
+
+            document.getElementById('notifTab-received').classList.add('text-gray-600', 'dark:text-gray-400');
+            document.getElementById('notifTab-sent').classList.add('text-gray-600', 'dark:text-gray-400');
+
+            document.getElementById(`notifContent-${tabName}`).classList.remove('hidden');
+            const activeTab = document.getElementById(`notifTab-${tabName}`);
+            activeTab.classList.add('bg-white', 'dark:bg-gray-800', 'shadow-sm', 'text-gray-900', 'dark:text-gray-100');
+            activeTab.classList.remove('text-gray-600', 'dark:text-gray-400');
+        }
+
+        function updateAvatarElement(avatarElement, imageSrc) {
+            if (!avatarElement) return;
+            const img = avatarElement.querySelector('img');
+            const svg = avatarElement.querySelector('svg');
+            if (img) {
+                img.src = imageSrc;
+                img.classList.remove('hidden');
+            } else {
+                const newImg = document.createElement('img');
+                newImg.className = 'w-full h-full object-cover';
+                newImg.src = imageSrc;
+                avatarElement.appendChild(newImg);
+            }
+            if (svg) svg.classList.add('hidden');
+        }
+
+        function handleBannerAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageSrc = e.target.result;
+                const bannerDisplay = document.getElementById('profileBannerAvatar');
+                const bannerImg = document.getElementById('profileBannerAvatarImg');
+                if (!bannerImg) {
+                    const img = document.createElement('img');
+                    img.id = 'profileBannerAvatarImg';
+                    img.className = 'w-full h-full object-cover';
+                    img.src = imageSrc;
+                    img.alt = 'Avatar';
+                    bannerDisplay.appendChild(img);
+                } else {
+                    bannerImg.src = imageSrc;
+                    bannerImg.classList.remove('hidden');
+                }
+                const svg = bannerDisplay.querySelector('svg');
+                if (svg) svg.classList.add('hidden');
+                updateAvatarElement(document.querySelector('#profileToggle .w-10.h-10.rounded-full'), imageSrc);
+                updateAvatarElement(document.querySelector('#profileDropdown .w-10.h-10.rounded-full'), imageSrc);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function attachFile(type) {
+            const inputId = type === 'group' ? 'groupFileInput' : 'friendFileInput';
+            document.getElementById(inputId).click();
+        }
+
+        function handleFileUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const attachment = {
+                        name: file.name,
+                        size: formatFileSize(file.size),
+                        url: e.target.result
+                    };
+
+                    if (file.type.startsWith('image/')) {
+                        attachment.type = 'image';
+                    } else if (file.type.startsWith('video/')) {
+                        attachment.type = 'video';
+                    } else {
+                        attachment.type = 'file';
+                    }
+
+                    const message = {
+                        text: '',
+                        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                        isSent: true,
+                        sender: 'Bạn',
+                        attachment: attachment
+                    };
+
+                    if (!currentChatId) return;
+                    if (!messages[currentChatId]) {
+                        messages[currentChatId] = [];
+                    }
+
+                    messages[currentChatId].push(message);
+                    appendMessageToDesktop(message, true);
+                    if (isMobile()) {
+                        appendMessageToMobile(message, true);
+                    }
+                    scrollToBottom(currentChatType === 'group' ? 'groupChatMessages' : 'friendChatMessages');
+                    scrollToBottom(currentChatType === 'group' ? 'mobileGroupChatMessages' : 'mobileFriendChatMessages');
+                    updateLastMessageTime(currentChatId);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Reset input
+            event.target.value = '';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function insertEmoji(type) {
+            const inputId = type === 'group' ? 'groupMessageInput' : 'friendMessageInput';
+            const input = document.getElementById(inputId);
+            input.value += '😊';
+            input.focus();
+        }
+
+        function toggleChatInfo() {
+            const sidebarId = currentChatType === 'group' ? 'groupChatInfoSidebar' : 'friendChatInfoSidebar';
+            const sidebar = document.getElementById(sidebarId);
+            if (sidebar.classList.contains('translate-x-full')) {
+                sidebar.classList.remove('translate-x-full');
+                updateChatInfo();
+            } else {
+                sidebar.classList.add('translate-x-full');
+            }
+        }
+
+        function updateChatInfo() {
+            const contentId = currentChatType === 'group' ? 'groupChatInfoContent' : 'friendChatInfoContent';
+            const content = document.getElementById(contentId);
+            content.innerHTML = '';
+
+            if (!currentChatId) return;
+
+            if (currentChatType === 'group') {
+                // Mock Group Data
+                const groupName = document.querySelector(`[data-id="${currentChatId}"] h3`).textContent;
+                content.innerHTML = `
+                    <div class="flex flex-col items-center mb-6">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-2xl font-bold mb-3">
+                            ${groupName.charAt(0).toUpperCase()}
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100 text-center">${groupName}</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Nhóm • 3 thành viên</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h5 class="font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">Thành viên</h5>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">A</div>
+                            <span class="text-gray-700 dark:text-gray-300">An Nguyễn</span>
+                            <span class="text-xs text-gray-400 ml-auto">Admin</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center text-white text-xs">M</div>
+                            <span class="text-gray-700 dark:text-gray-300">M tikcode</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs">B</div>
+                            <span class="text-gray-700 dark:text-gray-300">Bạn</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button class="w-full py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            Rời nhóm
+                        </button>
+                    </div>
+                `;
+            } else {
+                // Mock Friend Data
+                const friendName = document.querySelector(`[data-id="${currentChatId}"] h3`).textContent;
+                const status = document.querySelector(`[data-id="${currentChatId}"]`).getAttribute('data-status');
+
+                content.innerHTML = `
+                    <div class="flex flex-col items-center mb-6">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-2xl font-bold mb-3">
+                            ${friendName.charAt(0).toUpperCase()}
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100 text-center">${friendName}</h4>
+                        <div class="flex items-center gap-2 mt-1">
+                            <div class="w-2 h-2 rounded-full ${status === 'online' ? 'bg-green-500' : 'bg-gray-400'}"></div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">${status === 'online' ? 'Đang hoạt động' : 'Không hoạt động'}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Email</p>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">${currentChatId}@example.com</p>
+                        </div>
+                        <div class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Bio</p>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">Lập trình viên đam mê code dạo.</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                        <button class="w-full py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                            Chặn người dùng
+                        </button>
+                        <button class="w-full py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center justify-center gap-2" onclick="deleteFriend('${currentChatId}')">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            Xóa bạn bè
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
