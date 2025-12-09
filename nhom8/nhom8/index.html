@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moji Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="tailwind.config.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script> -->
+
+    <style>
+
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c4c4c4;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a0a0a0;
+        }
+
+        /* Dark mode scrollbar */
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #374151;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6b7280;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+    </style>
+
+</head>
+<body class="bg-white dark:bg-gray-900 md:bg-gray-100 dark:md:bg-gray-900 transition-colors duration-300">
+    <div class="flex h-screen overflow-hidden w-full">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="bg-white dark:bg-gray-900 w-full md:w-80 flex-shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700 transition-all duration-300 h-full">
+            <!-- Top Section: Logo & Toggle -->
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between mb-4">
+                    <h1 class="text-2xl font-bold text-moji-purple dark:text-purple-400">Moji</h1>
+                    <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        <svg id="moonIcon" class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                        <svg id="sunIcon" class="w-5 h-5 text-yellow-500 hidden" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+                <button class="w-full bg-moji-purple dark:bg-purple-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-moji-purple-dark dark:hover:bg-purple-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span>Gửi Tin Nhắn Mới</span>
+                </button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
+                <!-- NHÓM CHAT Section -->
+                <div class="px-4 py-3">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase">NHÓM CHAT</h2>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button id="createGroupBtn" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Tạo nhóm chat">
+                                <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Group Chat Items -->
+                    <div class="space-y-2">
+                        <div class="group-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="group" data-id="test">
+                            <div class="flex items-start gap-3">
+                                <div class="flex -space-x-2">
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm border-2 border-white dark:border-gray-900 overflow-hidden" data-name="T" data-image="">
+                                        <span class="avatar-text flex">T</span>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt)txt.style.display='flex';})(this)">
+                                    </div>
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                        <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                    </div>
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                        <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0 relative">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate group-name flex-1" title="Nhóm Test">Nhóm Test</h3>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">3 thành viên</p>
+                                        <button class="group-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleGroupMenu(event, 'test')">
+                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <!-- Group Menu Dropdown -->
+                                    <div id="groupMenu-test" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                        <button class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="editGroup('test')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                            Chỉnh sửa nhóm
+                                        </button>
+                                        <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteGroup('test')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            Xóa nhóm
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="group-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="group" data-id="group2">
+                            <div class="flex items-start gap-3">
+                                <div class="flex -space-x-2">
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm border-2 border-white dark:border-gray-900 overflow-hidden" data-name="A" data-image="">
+                                        <span class="avatar-text flex">A</span>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt)txt.style.display='flex';})(this)">
+                                    </div>
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                        <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                    </div>
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                        <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0 relative">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate group-name flex-1" title="group2">group2</h3>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">3 thành viên</p>
+                                        <button class="group-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleGroupMenu(event, 'group2')">
+                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <!-- Group Menu Dropdown -->
+                                    <div id="groupMenu-group2" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                        <button class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="editGroup('group2')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                            Chỉnh sửa nhóm
+                                        </button>
+                                        <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteGroup('group2')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            Xóa nhóm
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="group-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="group" data-id="backend">
+                            <div class="flex items-start gap-3">
+                                <div class="flex -space-x-2">
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white dark:border-gray-900 overflow-hidden" data-name="" data-image="">
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="this.style.display='none';">
+                                    </div>
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                        <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                    </div>
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                        <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0 relative">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate group-name flex-1" title="Nhóm Backend Dev">Nhóm Backend Dev</h3>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">3 thành viên</p>
+                                        <button class="group-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleGroupMenu(event, 'backend')">
+                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <!-- Group Menu Dropdown -->
+                                    <div id="groupMenu-backend" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                        <button class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="editGroup('backend')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                            Chỉnh sửa nhóm
+                                        </button>
+                                        <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteGroup('backend')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            Xóa nhóm
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="group-item p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30 border-l-4 border-moji-purple dark:border-purple-400 cursor-pointer transition-colors active group" data-type="group" data-id="frontend">
+                            <div class="flex items-start gap-3">
+                                <div class="flex -space-x-2">
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white dark:border-gray-900 overflow-hidden" data-name="" data-image="">
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="this.style.display='none';">
+                                    </div>
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                        <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                    </div>
+                                    <div class="group-avatar w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-white dark:border-gray-900 overflow-hidden flex items-center justify-center" data-name="" data-image="">
+                                        <span class="avatar-text hidden text-white font-semibold text-sm"></span>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="(function(img){img.style.display='none';var txt=img.parentElement.querySelector('.avatar-text');if(txt&&img.parentElement.getAttribute('data-name')){txt.textContent=img.parentElement.getAttribute('data-name').charAt(0).toUpperCase();txt.classList.remove('hidden');}})(this)">
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0 relative">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate group-name flex-1" title="Nhóm Frontend Dev">Nhóm Frontend Dev</h3>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">3 thành viên</p>
+                                        <button class="group-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleGroupMenu(event, 'frontend')">
+                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <!-- Group Menu Dropdown -->
+                                    <div id="groupMenu-frontend" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                        <button class="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="editGroup('frontend')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                            Chỉnh sửa nhóm
+                                        </button>
+                                        <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteGroup('frontend')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            Xóa nhóm
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BẠN BÈ Section -->
+                <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase">BẠN BÈ</h2>
+                        </div>
+                        <button id="addFriendBtn" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="Kết bạn">
+                            <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Friend Items -->
+                    <div class="space-y-2">
+                        <div class="friend-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="friend" data-id="tikcode" data-status="offline" data-name="M tikcode">
+                            <div class="flex items-start gap-3">
+                                <div class="relative flex-shrink-0">
+                                    <div class="friend-avatar w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center overflow-hidden" data-name="M tikcode" data-image="">
+                                        <svg class="avatar-icon w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="this.style.display='none'; this.parentElement.querySelector('.avatar-icon').style.display='block';">
+                                    </div>
+                                    <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-gray-400 dark:bg-gray-500 rounded-full border-2 border-white dark:border-gray-900 status-dot"></div>
+                                </div>
+                                <div class="flex-1 min-w-0 relative">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate friend-name flex-1" title="M tikcode">M tikcode</h3>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">bla bla bla</p>
+                                        <button class="friend-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleFriendMenu(event, 'tikcode')">
+                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <!-- Friend Menu Dropdown -->
+                                    <div id="friendMenu-tikcode" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                        <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteFriend('tikcode')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            Xóa bạn bè
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="friend-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="friend" data-id="maile" data-status="offline" data-name="Mai Lê">
+                            <div class="flex items-start gap-3">
+                                <div class="relative flex-shrink-0">
+                                    <div class="friend-avatar w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center overflow-hidden" data-name="Mai Lê" data-image="">
+                                        <svg class="avatar-icon w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="this.style.display='none'; this.parentElement.querySelector('.avatar-icon').style.display='block';">
+                                    </div>
+                                    <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-gray-400 dark:bg-gray-500 rounded-full border-2 border-white dark:border-gray-900 status-dot"></div>
+                                </div>
+                                <div class="flex-1 min-w-0 relative">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate friend-name flex-1" title="Mai Lê">Mai Lê</h3>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">ko</p>
+                                        <button class="friend-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleFriendMenu(event, 'maile')">
+                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <!-- Friend Menu Dropdown -->
+                                    <div id="friendMenu-maile" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                        <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteFriend('maile')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            Xóa bạn bè
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="friend-item p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors group" data-type="friend" data-id="annguyen" data-status="online" data-name="An Nguyễn">
+                            <div class="flex items-start gap-3">
+                                <div class="relative flex-shrink-0">
+                                    <div class="friend-avatar w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center overflow-hidden" data-name="An Nguyễn" data-image="">
+                                        <svg class="avatar-icon w-6 h-6 text-white hidden" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <span class="avatar-text text-white font-semibold text-sm">A</span>
+                                        <img class="avatar-image hidden w-full h-full object-cover" src="" alt="" onerror="this.style.display='none'; if(this.parentElement.querySelector('.avatar-text')) { this.parentElement.querySelector('.avatar-text').style.display='flex'; } else { this.parentElement.querySelector('.avatar-icon').style.display='block'; }">
+                                    </div>
+                                    <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white dark:border-gray-900 status-dot"></div>
+                                </div>
+                                <div class="flex-1 min-w-0 relative">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate friend-name flex-1" title="An Nguyễn">An Nguyễn</h3>
+                                        <span class="text-xs text-gray-400 dark:text-gray-500 time-display flex-shrink-0" data-timestamp=""></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">hê an</p>
+                                        <button class="friend-menu-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0" onclick="event.stopPropagation(); toggleFriendMenu(event, 'annguyen')">
+                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <!-- Friend Menu Dropdown -->
+                                    <div id="friendMenu-annguyen" class="hidden absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 min-w-[150px]">
+                                        <button class="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2" onclick="deleteFriend('annguyen')">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            Xóa bạn bè
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Profile Section -->
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 relative">
+                <div class="flex items-center gap-3 cursor-pointer" id="profileToggle">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate">User Một</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">user1</p>
+                    </div>
+                    <button id="profileSettingsBtn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Profile Dropdown Menu -->
+                <div id="profileDropdown" class="hidden absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                    <!-- User Profile Section -->
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="openProfileSettings()">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate">User Một</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">user1</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Option -->
+                    <div class="px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3" onclick="openProfileSettings()">
+                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        <span class="text-gray-900 dark:text-gray-100">Tài Khoản</span>
+                    </div>
+
+                    <!-- Notifications Option -->
+                    <div class="px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3" onclick="openNotificationsModal()">
+                        <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        <span class="text-gray-900 dark:text-gray-100">Thông Báo</span>
+                    </div>
+
+                    <!-- Logout Option -->
+                    <div class="px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 border-t border-gray-200 dark:border-gray-700" onclick="handleLogout()">
+                        <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        <span class="text-red-500 font-medium">Log out</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Modal Overlay -->
+        <div id="modalOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeAllModals()">
+            <!-- Add Friend Modal -->
+            <div id="addFriendModal" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md transform transition-all my-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Kết Bạn</h2>
+                        <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tìm bằng username</label>
+                        <input type="text" id="friendUsernameInput" placeholder="Gõ tên username vào đây..." class="w-full px-4 py-2 border-2 border-moji-purple rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple dark:bg-gray-700 dark:text-white dark:border-purple-500">
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="closeAllModals()" class="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                            Cancel
+                        </button>
+                        <button onclick="searchFriend()" class="flex-1 px-4 py-2 bg-moji-purple dark:bg-purple-600 text-white rounded-lg hover:bg-moji-purple-dark dark:hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            Tìm
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Group Modal -->
+            <div id="createGroupModal" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md transform transition-all my-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Tạo Nhóm Chat Mới</h2>
+                        <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên nhóm</label>
+                        <input type="text" id="groupNameInput" placeholder="Nhóm họp lớp" value="Nhóm họp lớp" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mời thành viên</label>
+                        <input type="text" id="inviteMembersInput" placeholder="Tìm kiếm thành viên..." class="w-full px-4 py-2 border-2 border-moji-purple rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple dark:bg-gray-700 dark:text-white dark:border-purple-500 mb-3">
+                        <div id="suggestedMembers" class="space-y-2">
+                            <div class="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer" onclick="toggleMemberSelection(this, 'annguyen')">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-sm">A</div>
+                                <span class="flex-1 text-gray-900 dark:text-gray-100">An Nguyễn</span>
+                                <div class="member-check hidden text-moji-purple">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer" onclick="toggleMemberSelection(this, 'tikcode')">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                                <span class="flex-1 text-gray-900 dark:text-gray-100">M tikcode</span>
+                                <div class="member-check hidden text-moji-purple">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="createGroup()" class="w-full px-4 py-3 bg-gradient-to-r from-moji-purple to-purple-600 dark:from-purple-600 dark:to-purple-700 text-white rounded-lg hover:from-moji-purple-dark hover:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800 transition-all flex items-center justify-center gap-2 font-medium">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Tạo nhóm
+                    </button>
+                </div>
+            </div>
+
+            <!-- Profile & Settings Modal -->
+            <div id="profileSettingsModal" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl transform transition-all max-h-[90vh] overflow-y-auto my-auto">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Profile & Settings</h2>
+                    <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Profile Banner -->
+                <div class="relative bg-gradient-to-r from-purple-500 via-pink-500 to-purple-600 p-8">
+                    <div class="flex items-center gap-6">
+                        <div class="relative">
+                            <div id="profileBannerAvatar" class="w-24 h-24 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                                <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                </svg>
+                                <img id="profileBannerAvatarImg" class="hidden w-full h-full object-cover" src="" alt="Avatar">
+                            </div>
+                            <label for="bannerAvatarUpload" class="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors shadow-lg">
+                                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                <input type="file" id="bannerAvatarUpload" accept="image/*" class="hidden" onchange="handleBannerAvatarUpload(event)">
+                            </label>
+                        </div>
+                        <div class="flex-1 text-white">
+                            <h3 id="profileBannerName" class="text-3xl font-bold mb-2">User Một</h3>
+                            <p id="profileBannerBio" class="text-white/90 text-lg">Living life to the fullest ✨ Coffee lover ☕</p>
+                        </div>
+                        <div class="flex items-center gap-2 bg-green-500 px-4 py-2 rounded-full">
+                            <div class="w-2 h-2 bg-white rounded-full"></div>
+                            <span class="text-white font-medium">Online</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                    <button onclick="switchProfileTab('account')" id="tab-account" class="flex-1 px-6 py-4 font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border-b-2 border-moji-purple shadow-sm">
+                        Tài Khoản
+                    </button>
+                    <button onclick="switchProfileTab('security')" id="tab-security" class="flex-1 px-6 py-4 font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100">
+                        Bảo Mật
+                    </button>
+                </div>
+
+                <!-- Tab Content: Account -->
+                <div id="tabContent-account" class="p-6">
+                    <div class="mb-6">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5 text-moji-purple" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                            </svg>
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Thông tin cá nhân</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Cập nhật chi tiết cá nhân và thông tin hồ sơ của bạn</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Left Column -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên hiển thị</label>
+                                <input type="text" id="profileNameInput" value="User Một" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                                <input type="email" id="profileEmailInput" value="user1@gmail.com" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Giới thiệu</label>
+                                <textarea id="profileBioInput" rows="3" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">Living life to the fullest ✨ Coffee lover ☕</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tên người dùng</label>
+                                <input type="text" id="profileUsernameInput" value="user1" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Số điện thoại</label>
+                                <input type="tel" id="profilePhoneInput" value="" placeholder="Nhập số điện thoại" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="saveProfile()" class="mt-6 w-full px-6 py-3 bg-gradient-to-r from-moji-purple to-pink-500 text-white rounded-lg hover:from-moji-purple-dark hover:to-pink-600 transition-all font-medium">
+                        Lưu thay đổi
+                    </button>
+                </div>
+
+                <!-- Tab Content: Security -->
+                <div id="tabContent-security" class="hidden p-6">
+                    <div class="flex flex-col items-center">
+                        <div class="mb-6 text-center w-full max-w-md">
+                            <div class="flex items-center justify-center gap-2 mb-2">
+                                <svg class="w-5 h-5 text-moji-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                                <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Đổi mật khẩu</h3>
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Cập nhật mật khẩu của bạn để bảo vệ tài khoản</p>
+                        </div>
+
+                        <div class="space-y-5 w-full max-w-md">
+                        <!-- Current Password -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mật khẩu hiện tại</label>
+                            <div class="relative">
+                                <input type="password" id="currentPassword" placeholder="Nhập mật khẩu hiện tại" class="w-full px-4 py-2 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white">
+                                <button type="button" onclick="togglePasswordVisibility('currentPassword', 'currentPasswordToggle')" id="currentPasswordToggle" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- New Password -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mật khẩu mới</label>
+                            <div class="relative">
+                                <input type="password" id="newPassword" placeholder="Nhập mật khẩu mới" class="w-full px-4 py-2 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white" oninput="checkPasswordStrength(this.value)">
+                                <button type="button" onclick="togglePasswordVisibility('newPassword', 'newPasswordToggle')" id="newPasswordToggle" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <!-- Password Strength Indicator -->
+                            <div id="passwordStrength" class="mt-2 hidden">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                        <div id="strengthBar" class="h-full transition-all duration-300 rounded-full"></div>
+                                    </div>
+                                    <span id="strengthText" class="text-xs font-medium"></span>
+                                </div>
+                                <div id="passwordRequirements" class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                                    <div id="req-length" class="flex items-center gap-2">
+                                        <span class="req-icon">○</span>
+                                        <span>Ít nhất 8 ký tự</span>
+                                    </div>
+                                    <div id="req-uppercase" class="flex items-center gap-2">
+                                        <span class="req-icon">○</span>
+                                        <span>Có chữ hoa</span>
+                                    </div>
+                                    <div id="req-lowercase" class="flex items-center gap-2">
+                                        <span class="req-icon">○</span>
+                                        <span>Có chữ thường</span>
+                                    </div>
+                                    <div id="req-number" class="flex items-center gap-2">
+                                        <span class="req-icon">○</span>
+                                        <span>Có số</span>
+                                    </div>
+                                    <div id="req-special" class="flex items-center gap-2">
+                                        <span class="req-icon">○</span>
+                                        <span>Có ký tự đặc biệt (!@#$%^&*)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Confirm New Password -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Xác nhận mật khẩu mới</label>
+                            <div class="relative">
+                                <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu mới" class="w-full px-4 py-2 pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-moji-purple focus:border-moji-purple dark:bg-gray-700 dark:text-white" oninput="checkPasswordMatch()">
+                                <button type="button" onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordToggle')" id="confirmPasswordToggle" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="passwordMatchMessage" class="mt-1 text-xs hidden"></div>
+                        </div>
+
+                        <button onclick="changePassword()" class="w-full px-6 py-3 bg-gradient-to-r from-moji-purple to-pink-500 text-white rounded-lg hover:from-moji-purple-dark hover:to-pink-600 transition-all font-medium">
+                            Đổi mật khẩu
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Modal -->
+            <div id="notificationsModal" class=" block bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md transform transition-all my-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Lời mời kết bạn</h2>
+                        <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="flex mb-4 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                        <button onclick="switchNotificationTab('received')" id="notifTab-received" class="flex-1 px-4 py-2 rounded-md font-medium text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 shadow-sm transition-all">
+                            Đã nhận
+                        </button>
+                        <button onclick="switchNotificationTab('sent')" id="notifTab-sent" class="flex-1 px-4 py-2 rounded-md font-medium text-gray-600 dark:text-gray-400 bg-purple-200 dark:bg-purple-900/30 transition-all">
+                            Đã gửi
+                        </button>
+                    </div>
+
+                    <!-- Tab Content: Received -->
+                    <div id="notifContent-received" class="min-h-[200px] flex items-center justify-center">
+                        <p class="text-gray-700 dark:text-gray-300 text-base">Bạn chưa có lời mời kết bạn nào.</p>
+                    </div>
+
+                    <!-- Tab Content: Sent (Hidden by default) -->
+                    <div id="notifContent-sent" class="hidden min-h-[200px] flex items-center justify-center">
+                        <p class="text-gray-700 dark:text-gray-300 text-base">Bạn chưa gửi lời mời kết bạn nào.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group List Modal -->
+            <div id="groupListModal" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl transform transition-all my-auto max-h-[80vh] flex flex-col">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Danh sách nhóm</h2>
+                        <button onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+                    <div id="groupListContent" class="space-y-3">
+                        <!-- Groups will be populated here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Content Area (Hidden on mobile, shown on desktop) -->
+        <div id="chatContent" class="hidden md:flex flex-1 bg-white dark:bg-gray-900 min-w-0 relative z-0">
+            <div class="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500">
+                <div class="text-center">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <p class="text-lg dark:text-gray-400">Chọn một cuộc trò chuyện để bắt đầu</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Chat View (Hidden by default, shown when item is clicked) -->
+        <div id="mobileChatView" class="hidden md:hidden flex-1 bg-white dark:bg-gray-900 flex flex-col">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+                <button id="backButton" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <div class="flex-1">
+                    <h2 id="chatTitle" class="font-semibold text-gray-900 dark:text-gray-100"></h2>
+                </div>
+            </div>
+            <div class="flex-1 flex items-center justify-center text-gray-400 dark:text-gray-500 p-4">
+                <div class="text-center">
+                    <p class="text-lg">Nội dung chat sẽ hiển thị ở đây</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const moonIcon = document.getElementById('moonIcon');
+        const sunIcon = document.getElementById('sunIcon');
+        let isDarkMode = false;
+
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            isDarkMode = true;
+            document.documentElement.classList.add('dark');
+            moonIcon.classList.add('hidden');
+            sunIcon.classList.remove('hidden');
+            document.body.classList.add('dark', 'bg-gray-900');
+        } else {
+            document.body.classList.add('bg-gray-100');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+                document.body.classList.remove('bg-gray-100');
+                document.body.classList.add('bg-gray-900');
+                moonIcon.classList.add('hidden');
+                sunIcon.classList.remove('hidden');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('bg-gray-900');
+                document.body.classList.add('bg-gray-100');
+                moonIcon.classList.remove('hidden');
+                sunIcon.classList.add('hidden');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // Mobile navigation
+        const sidebar = document.getElementById('sidebar');
+        const chatContent = document.getElementById('chatContent');
+        const mobileChatView = document.getElementById('mobileChatView');
+        const backButton = document.getElementById('backButton');
+        const chatTitle = document.getElementById('chatTitle');
+
+        const groupItems = document.querySelectorAll('.group-item, .friend-item');
+
+        function isMobile() {
+            return window.innerWidth < 768;
+        }
+
+        function showChatView(title) {
+            if (isMobile()) {
+                sidebar.classList.add('hidden');
+                mobileChatView.classList.remove('hidden');
+                chatTitle.textContent = title;
+            }
+        }
+
+        function showSidebar() {
+            if (isMobile()) {
+                sidebar.classList.remove('hidden');
+                mobileChatView.classList.add('hidden');
+            }
+        }
+
+        groupItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const title = item.querySelector('h3').textContent;
+
+                groupItems.forEach(i => {
+                    i.classList.remove('bg-purple-50', 'dark:bg-purple-900/30', 'border-l-4', 'border-moji-purple', 'dark:border-purple-400', 'active');
+                });
+
+                item.classList.add('bg-purple-50', 'dark:bg-purple-900/30', 'border-l-4', 'border-moji-purple', 'dark:border-purple-400', 'active');
+                showChatView(title);
+            });
+        });
+
+        backButton.addEventListener('click', () => {
+            showSidebar();
+        });
+
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                sidebar.classList.remove('hidden');
+                mobileChatView.classList.add('hidden');
+                if (chatContent && modalOverlay.classList.contains('hidden')) {
+                    chatContent.classList.remove('hidden');
+                    chatContent.classList.add('md:flex');
+                }
+            }
+        });
+
+        function updateFriendStatus(friendId, status) {
+            const friendItem = document.querySelector(`[data-id="${friendId}"]`);
+            if (friendItem) {
+                const statusDot = friendItem.querySelector('.status-dot');
+                friendItem.setAttribute('data-status', status);
+                if (status === 'online') {
+                    statusDot.classList.remove('bg-gray-400', 'dark:bg-gray-500');
+                    statusDot.classList.add('bg-green-500');
+                } else {
+                    statusDot.classList.remove('bg-green-500');
+                    statusDot.classList.add('bg-gray-400', 'dark:bg-gray-500');
+                }
+            }
+        }
+
+        // Function to update group member avatar
+        function updateGroupMemberAvatar(groupId, memberIndex, imageUrl, name) {
+            const groupItem = document.querySelector(`[data-type="group"][data-id="${groupId}"]`);
+            if (groupItem) {
+                const avatars = groupItem.querySelectorAll('.group-avatar');
+                const avatar = avatars[memberIndex];
+                if (avatar) {
+                    const img = avatar.querySelector('.avatar-image');
+                    const text = avatar.querySelector('.avatar-text');
+
+                    if (imageUrl && imageUrl.trim() !== '') {
+                        img.src = imageUrl;
+                        img.classList.remove('hidden');
+                        if (text) text.style.display = 'none';
+                    } else if (name && name.trim() !== '') {
+                        const firstLetter = name.trim().charAt(0).toUpperCase();
+                        if (text) {
+                            text.textContent = firstLetter;
+                            text.style.display = 'flex';
+                        }
+                        img.classList.add('hidden');
+                    }
+                    avatar.setAttribute('data-image', imageUrl || '');
+                    avatar.setAttribute('data-name', name || '');
+                }
+            }
+        }
+
+        // Function to update friend avatar
+        function updateFriendAvatar(friendId, imageUrl, name) {
+            const friendItem = document.querySelector(`[data-type="friend"][data-id="${friendId}"]`);
+            if (friendItem) {
+                const avatar = friendItem.querySelector('.friend-avatar');
+                if (avatar) {
+                    const img = avatar.querySelector('.avatar-image');
+                    const icon = avatar.querySelector('.avatar-icon');
+                    const text = avatar.querySelector('.avatar-text');
+
+                    if (imageUrl && imageUrl.trim() !== '') {
+                        img.src = imageUrl;
+                        img.classList.remove('hidden');
+                        if (icon) icon.classList.add('hidden');
+                        if (text) text.style.display = 'none';
+                    } else if (name && name.trim() !== '') {
+                        const firstLetter = name.trim().charAt(0).toUpperCase();
+                        if (text) {
+                            text.textContent = firstLetter;
+                            text.style.display = 'flex';
+                            if (icon) icon.classList.add('hidden');
+                        } else if (icon) {
+                            icon.classList.remove('hidden');
+                        }
+                        img.classList.add('hidden');
+                    } else {
+                        // Default icon
+                        if (icon) icon.classList.remove('hidden');
+                        if (text) text.style.display = 'none';
+                        img.classList.add('hidden');
+                    }
+                    avatar.setAttribute('data-image', imageUrl || '');
+                    avatar.setAttribute('data-name', name || '');
+                }
+            }
+        }
+
+        const modalOverlay = document.getElementById('modalOverlay');
+        const addFriendModal = document.getElementById('addFriendModal');
+        const createGroupModal = document.getElementById('createGroupModal');
+        const profileSettingsModal = document.getElementById('profileSettingsModal');
+        const notificationsModal = document.getElementById('notificationsModal');
+        const groupListModal = document.getElementById('groupListModal');
+        const addFriendBtn = document.getElementById('addFriendBtn');
+        const createGroupBtn = document.getElementById('createGroupBtn');
+        const profileSettingsBtn = document.getElementById('profileSettingsBtn');
+        const profileToggle = document.getElementById('profileToggle');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        function openModal(modalId) {
+            if (chatContent && window.innerWidth >= 768) {
+                chatContent.classList.add('hidden');
+                chatContent.classList.remove('md:flex');
+            }
+            modalOverlay.classList.remove('hidden');
+            document.getElementById(modalId).classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAllModals() {
+            modalOverlay.classList.add('hidden');
+            addFriendModal.classList.add('hidden');
+            createGroupModal.classList.add('hidden');
+            profileSettingsModal.classList.add('hidden');
+            notificationsModal.classList.add('hidden');
+            groupListModal.classList.add('hidden');
+            document.body.style.overflow = '';
+
+            if (chatContent && window.innerWidth >= 768) {
+                chatContent.classList.remove('hidden');
+                chatContent.classList.add('md:flex');
+            }
+        }
+
+        addFriendBtn.addEventListener('click', () => openModal('addFriendModal'));
+        createGroupBtn.addEventListener('click', () => openModal('createGroupModal'));
+
+        profileToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+
+        profileSettingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!profileToggle.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.add('hidden');
+            }
+        });
+
+        function openProfileSettings() {
+            profileDropdown.classList.add('hidden');
+            openModal('profileSettingsModal');
+        }
+
+        function handleLogout() {
+            profileDropdown.classList.add('hidden');
+            if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                // Logout logic here
+            }
+        }
+
+        function toggleGroupMenu(event, groupId) {
+            event.stopPropagation();
+            const menu = document.getElementById(`groupMenu-${groupId}`);
+            const allMenus = document.querySelectorAll('[id^="groupMenu-"]');
+
+            allMenus.forEach(m => {
+                if (m.id !== `groupMenu-${groupId}`) {
+                    m.classList.add('hidden');
+                }
+            });
+
+            menu.classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.group-menu-btn') && !e.target.closest('[id^="groupMenu-"]')) {
+                document.querySelectorAll('[id^="groupMenu-"]').forEach(menu => {
+                    menu.classList.add('hidden');
+                });
+            }
+            if (!e.target.closest('.friend-menu-btn') && !e.target.closest('[id^="friendMenu-"]')) {
+                document.querySelectorAll('[id^="friendMenu-"]').forEach(menu => {
+                    menu.classList.add('hidden');
+                });
+            }
+        });
+
+        function editGroup(groupId) {
+            const menu = document.getElementById(`groupMenu-${groupId}`);
+            menu.classList.add('hidden');
+            // Edit group logic here
+        }
+
+        function deleteGroup(groupId) {
+            const menu = document.getElementById(`groupMenu-${groupId}`);
+            menu.classList.add('hidden');
+            if (confirm('Bạn có chắc chắn muốn xóa nhóm này?')) {
+                // Delete group logic here
+            }
+        }
+
+        function populateGroupList() {
+            const groupListContent = document.getElementById('groupListContent');
+            const groupItems = document.querySelectorAll('.group-item[data-type="group"]');
+
+            if (groupItems.length === 0) {
+                groupListContent.innerHTML = '<p class="text-center text-gray-600 dark:text-gray-400 py-8">Bạn chưa có nhóm chat nào.</p>';
+                return;
+            }
+
+            groupListContent.innerHTML = '';
+
+            groupItems.forEach(groupItem => {
+                const groupId = groupItem.getAttribute('data-id');
+                const groupName = groupItem.querySelector('.group-name')?.textContent || 'Nhóm không tên';
+                const memberCount = groupItem.querySelector('p.text-xs')?.textContent || '0 thành viên';
+                const timeDisplay = groupItem.querySelector('.time-display');
+                const timestamp = timeDisplay?.getAttribute('data-timestamp') || '';
+                const timeText = timeDisplay?.textContent || '';
+                const avatars = groupItem.querySelectorAll('.group-avatar');
+
+                // Create group card
+                const groupCard = document.createElement('div');
+                groupCard.className = 'p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer';
+                groupCard.onclick = () => {
+                    closeAllModals();
+                    if (window.innerWidth < 768) {
+                        showChatView(groupName, groupId);
+                    }
+                    groupItem.click();
+                };
+
+                let avatarsHTML = '<div class="flex -space-x-2">';
+                avatars.forEach(avatar => {
+                    const imageUrl = avatar.getAttribute('data-image');
+                    const name = avatar.getAttribute('data-name');
+                    const img = avatar.querySelector('.avatar-image');
+                    const text = avatar.querySelector('.avatar-text');
+
+                    if (img && !img.classList.contains('hidden') && img.src) {
+                        avatarsHTML += `<div class="w-10 h-10 rounded-full border-2 border-white dark:border-gray-900 overflow-hidden flex-shrink-0">
+                            <img src="${img.src}" alt="" class="w-full h-full object-cover">
+                        </div>`;
+                    } else if (text && text.textContent) {
+                        const bgColor = avatar.classList.contains('from-blue-400') ? 'from-blue-400 to-blue-600' :
+                                       avatar.classList.contains('from-green-400') ? 'from-green-400 to-green-600' :
+                                       'from-purple-400 to-purple-600';
+                        avatarsHTML += `<div class="w-10 h-10 rounded-full bg-gradient-to-br ${bgColor} border-2 border-white dark:border-gray-900 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                            ${text.textContent}
+                        </div>`;
+                    }
+                });
+                avatarsHTML += '</div>';
+
+                groupCard.innerHTML = `
+                    <div class="flex items-start gap-4">
+                        ${avatarsHTML}
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2 mb-1">
+                                <h3 class="font-medium text-gray-900 dark:text-gray-100 truncate">${groupName}</h3>
+                                ${timeText ? `<span class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">${timeText}</span>` : ''}
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">${memberCount}</p>
+                        </div>
+                    </div>
+                `;
+
+                groupListContent.appendChild(groupCard);
+            });
+        }
+
+        function toggleFriendMenu(event, friendId) {
+            event.stopPropagation();
+            const menu = document.getElementById(`friendMenu-${friendId}`);
+            const allMenus = document.querySelectorAll('[id^="friendMenu-"]');
+
+            allMenus.forEach(m => {
+                if (m.id !== `friendMenu-${friendId}`) {
+                    m.classList.add('hidden');
+                }
+            });
+
+            menu.classList.toggle('hidden');
+        }
+
+        function deleteFriend(friendId) {
+            const menu = document.getElementById(`friendMenu-${friendId}`);
+            menu.classList.add('hidden');
+            if (confirm('Bạn có chắc chắn muốn xóa bạn bè này?')) {
+                const friendItem = document.querySelector(`[data-type="friend"][data-id="${friendId}"]`);
+                if (friendItem) {
+                    friendItem.remove();
+                }
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAllModals();
+            }
+        });
+
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return '';
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diffInSeconds = Math.floor((now - time) / 1000);
+
+            if (diffInSeconds < 60) {
+                return diffInSeconds + 's';
+            } else if (diffInSeconds < 3600) {
+                const minutes = Math.floor(diffInSeconds / 60);
+                return minutes + 'm';
+            } else if (diffInSeconds < 86400) {
+                const hours = Math.floor(diffInSeconds / 3600);
+                return hours + 'h';
+            } else {
+                const days = Math.floor(diffInSeconds / 86400);
+                return days + 'd';
+            }
+        }
+
+        function initializeTimestamps() {
+            const now = new Date();
+            const timeElements = document.querySelectorAll('.time-display[data-timestamp=""]');
+
+            const timestamps = [
+                now.getTime() - 21 * 60 * 1000, // 21 minutes ago - Nhóm Test
+                now.getTime() - 15 * 60 * 60 * 1000, // 15 hours ago - group2
+                now.getTime() - 22 * 60 * 60 * 1000, // 22 hours ago - Nhóm Backend Dev
+                now.getTime() - 17 * 60 * 60 * 1000, // 17 hours ago - Nhóm Frontend Dev
+                now.getTime() - 1 * 24 * 60 * 60 * 1000, // 1 day ago - M tikcode
+                now.getTime() - 4 * 24 * 60 * 60 * 1000, // 4 days ago - Mai Lê
+                now.getTime() - 1 * 60 * 1000, // 1 minute ago - An Nguyễn
+            ];
+
+            timeElements.forEach((element, index) => {
+                if (index < timestamps.length) {
+                    element.setAttribute('data-timestamp', timestamps[index]);
+                    element.textContent = formatTimeAgo(timestamps[index]);
+                }
+            });
+        }
+
+        function updateTimeDisplays() {
+            document.querySelectorAll('.time-display[data-timestamp]').forEach(element => {
+                const timestamp = element.getAttribute('data-timestamp');
+                if (timestamp) {
+                    element.textContent = formatTimeAgo(parseInt(timestamp));
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.group-avatar').forEach(avatar => {
+                const imageUrl = avatar.getAttribute('data-image');
+                const name = avatar.getAttribute('data-name');
+                const img = avatar.querySelector('.avatar-image');
+                const text = avatar.querySelector('.avatar-text');
+
+                if (imageUrl && imageUrl.trim() !== '') {
+                    img.src = imageUrl;
+                    img.classList.remove('hidden');
+                    if (text) text.style.display = 'none';
+                } else if (name && name.trim() !== '') {
+                    if (text) text.style.display = 'flex';
+                    img.classList.add('hidden');
+                } else {
+                    if (text) text.style.display = 'none';
+                    img.classList.add('hidden');
+                }
+            });
+
+            document.querySelectorAll('.friend-avatar').forEach(avatar => {
+                const imageUrl = avatar.getAttribute('data-image');
+                const name = avatar.getAttribute('data-name');
+                const img = avatar.querySelector('.avatar-image');
+                const icon = avatar.querySelector('.avatar-icon');
+                const text = avatar.querySelector('.avatar-text');
+
+                if (imageUrl && imageUrl.trim() !== '') {
+                    img.src = imageUrl;
+                    img.classList.remove('hidden');
+                    if (icon) icon.classList.add('hidden');
+                    if (text) text.style.display = 'none';
+                } else if (name && name.trim() !== '') {
+                    const firstLetter = name.trim().charAt(0).toUpperCase();
+                    if (text) {
+                        text.textContent = firstLetter;
+                        text.style.display = 'flex';
+                        if (icon) icon.classList.add('hidden');
+                    } else if (icon) {
+                        icon.classList.remove('hidden');
+                    }
+                    img.classList.add('hidden');
+                } else {
+                    if (icon) icon.classList.remove('hidden');
+                    if (text) text.style.display = 'none';
+                    img.classList.add('hidden');
+                }
+            });
+
+            document.querySelectorAll('.group-name, .friend-name').forEach(element => {
+                if (element.scrollWidth > element.clientWidth) {
+                    element.setAttribute('title', element.textContent);
+                }
+            });
+
+            initializeTimestamps();
+
+            if (chatContent && window.innerWidth >= 768) {
+                chatContent.classList.remove('hidden');
+                chatContent.classList.add('md:flex');
+            }
+        });
+
+        setInterval(updateTimeDisplays, 60000);
+
+        function searchFriend() {
+            const username = document.getElementById('friendUsernameInput').value.trim();
+            if (username) {
+                // Search friend logic here
+                closeAllModals();
+            }
+        }
+
+        const selectedMembers = new Set();
+        function toggleMemberSelection(element, memberId) {
+            const checkIcon = element.querySelector('.member-check');
+            if (selectedMembers.has(memberId)) {
+                selectedMembers.delete(memberId);
+                checkIcon.classList.add('hidden');
+                element.classList.remove('bg-purple-50', 'dark:bg-purple-900/20');
+            } else {
+                selectedMembers.add(memberId);
+                checkIcon.classList.remove('hidden');
+                element.classList.add('bg-purple-50', 'dark:bg-purple-900/20');
+            }
+        }
+
+        function createGroup() {
+            const groupName = document.getElementById('groupNameInput').value.trim();
+            if (groupName && selectedMembers.size > 0) {
+                // Create group logic here
+                closeAllModals();
+                selectedMembers.clear();
+            } else {
+                alert('Vui lòng nhập tên nhóm và chọn ít nhất một thành viên');
+            }
+        }
+
+        function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('profileAvatarImg');
+                    const display = document.getElementById('profileAvatarDisplay');
+                    const svg = display.querySelector('svg');
+
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                    if (svg) svg.classList.add('hidden');
+
+                    const sidebarAvatar = document.querySelector('#sidebar .w-10.h-10.rounded-full');
+                    if (sidebarAvatar) {
+                        const sidebarImg = sidebarAvatar.querySelector('img');
+                        if (sidebarImg) {
+                            sidebarImg.src = e.target.result;
+                            sidebarImg.classList.remove('hidden');
+                            const sidebarSvg = sidebarAvatar.querySelector('svg');
+                            if (sidebarSvg) sidebarSvg.classList.add('hidden');
+                        }
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('profileNameInput').value.trim();
+            const username = document.getElementById('profileUsernameInput').value.trim();
+            const email = document.getElementById('profileEmailInput').value.trim();
+            const bio = document.getElementById('profileBioInput').value.trim();
+
+            if (name && username) {
+                // Save profile logic here
+
+                const sidebarNameElement = document.querySelector('#profileToggle h3');
+                const sidebarUsernameElement = document.querySelector('#profileToggle p.text-xs');
+                if (sidebarNameElement) sidebarNameElement.textContent = name;
+                if (sidebarUsernameElement) sidebarUsernameElement.textContent = username;
+
+                const dropdownNameElement = document.querySelector('#profileDropdown h3');
+                const dropdownUsernameElement = document.querySelector('#profileDropdown p.text-xs');
+                if (dropdownNameElement) dropdownNameElement.textContent = name;
+                if (dropdownUsernameElement) dropdownUsernameElement.textContent = username;
+
+                const bannerNameElement = document.getElementById('profileBannerName');
+                const bannerBioElement = document.getElementById('profileBannerBio');
+                if (bannerNameElement) bannerNameElement.textContent = name;
+                if (bannerBioElement) bannerBioElement.textContent = bio || 'Living life to the fullest ✨ Coffee lover ☕';
+
+                alert('Đã lưu thông tin tài khoản');
+                closeAllModals();
+            } else {
+                alert('Vui lòng điền đầy đủ thông tin');
+            }
+        }
+
+        function switchProfileTab(tabName) {
+            document.querySelectorAll('[id^="tabContent-"]').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+
+            document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+                tab.classList.remove('bg-white', 'dark:bg-gray-800', 'border-b-2', 'border-moji-purple', 'shadow-sm', 'text-gray-900', 'dark:text-gray-100');
+                tab.classList.add('text-gray-600', 'dark:text-gray-400');
+            });
+
+            const selectedContent = document.getElementById(`tabContent-${tabName}`);
+            if (selectedContent) {
+                selectedContent.classList.remove('hidden');
+            }
+
+            const selectedTab = document.getElementById(`tab-${tabName}`);
+            if (selectedTab) {
+                selectedTab.classList.add('bg-white', 'dark:bg-gray-800', 'border-b-2', 'border-moji-purple', 'shadow-sm', 'text-gray-900', 'dark:text-gray-100');
+                selectedTab.classList.remove('text-gray-600', 'dark:text-gray-400');
+            }
+        }
+
+        function togglePasswordVisibility(inputId, toggleId) {
+            const input = document.getElementById(inputId);
+            const toggle = document.getElementById(toggleId);
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggle.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                    </svg>
+                `;
+            } else {
+                input.type = 'password';
+                toggle.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                `;
+            }
+        }
+
+        function checkPasswordStrength(password) {
+            const strengthDiv = document.getElementById('passwordStrength');
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+
+            if (!password) {
+                strengthDiv.classList.add('hidden');
+                return;
+            }
+
+            strengthDiv.classList.remove('hidden');
+
+            let strength = 0;
+            const requirements = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+            };
+
+            // Update requirement indicators
+            Object.keys(requirements).forEach(key => {
+                const reqElement = document.getElementById(`req-${key}`);
+                if (reqElement) {
+                    const icon = reqElement.querySelector('.req-icon');
+                    if (requirements[key]) {
+                        icon.textContent = '✓';
+                        icon.className = 'req-icon text-green-500';
+                        strength++;
+                    } else {
+                        icon.textContent = '○';
+                        icon.className = 'req-icon text-gray-400';
+                    }
+                }
+            });
+
+            // Update strength bar and text
+            const percentage = (strength / 5) * 100;
+            let color = '';
+            let text = '';
+
+            if (strength <= 2) {
+                color = 'bg-red-500';
+                text = 'Yếu';
+            } else if (strength <= 3) {
+                color = 'bg-yellow-500';
+                text = 'Trung bình';
+            } else if (strength <= 4) {
+                color = 'bg-blue-500';
+                text = 'Mạnh';
+            } else {
+                color = 'bg-green-500';
+                text = 'Rất mạnh';
+            }
+
+            strengthBar.style.width = percentage + '%';
+            strengthBar.className = `h-full transition-all duration-300 rounded-full ${color}`;
+            strengthText.textContent = text;
+            strengthText.className = `text-xs font-medium ${color.replace('bg-', 'text-')}`;
+        }
+
+        function checkPasswordMatch() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('passwordMatchMessage');
+
+            if (!confirmPassword) {
+                messageDiv.classList.add('hidden');
+                return;
+            }
+
+            messageDiv.classList.remove('hidden');
+
+            if (newPassword === confirmPassword) {
+                messageDiv.textContent = '✓ Mật khẩu khớp';
+                messageDiv.className = 'mt-1 text-xs text-green-500';
+            } else {
+                messageDiv.textContent = '✗ Mật khẩu không khớp';
+                messageDiv.className = 'mt-1 text-xs text-red-500';
+            }
+        }
+
+        function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('Vui lòng điền đầy đủ thông tin');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                alert('Mật khẩu mới và xác nhận mật khẩu không khớp');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                alert('Mật khẩu mới phải có ít nhất 8 ký tự');
+                return;
+            }
+
+            if (confirm('Bạn có chắc chắn muốn đổi mật khẩu?')) {
+                // Password change logic here
+                alert('Đã đổi mật khẩu thành công!');
+
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                document.getElementById('passwordStrength').classList.add('hidden');
+                document.getElementById('passwordMatchMessage').classList.add('hidden');
+            }
+        }
+
+        function switchNotificationTab(tabName) {
+            document.querySelectorAll('[id^="notifContent-"]').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            document.querySelectorAll('[id^="notifTab-"]').forEach(tab => {
+                tab.classList.remove('bg-white', 'dark:bg-gray-800', 'shadow-sm', 'text-gray-900', 'dark:text-gray-100');
+                tab.classList.add('bg-purple-200', 'dark:bg-purple-900/30', 'text-gray-600', 'dark:text-gray-400');
+            });
+
+            const selectedContent = document.getElementById(`notifContent-${tabName}`);
+            const selectedTab = document.getElementById(`notifTab-${tabName}`);
+
+            if (selectedContent) {
+                selectedContent.classList.remove('hidden');
+            }
+
+            if (selectedTab) {
+                selectedTab.classList.remove('bg-purple-200', 'dark:bg-purple-900/30', 'text-gray-600', 'dark:text-gray-400');
+                selectedTab.classList.add('bg-white', 'dark:bg-gray-800', 'shadow-sm', 'text-gray-900', 'dark:text-gray-100');
+            }
+        }
+
+        function openNotificationsModal() {
+            if (profileDropdown) {
+                profileDropdown.classList.add('hidden');
+            }
+            openModal('notificationsModal');
+   //         setTimeout(() => switchNotificationTab('received'), 10);
+        }
+
+        function updateAvatarElement(avatarElement, imageSrc) {
+            if (!avatarElement) return;
+
+            const img = avatarElement.querySelector('img');
+            const svg = avatarElement.querySelector('svg');
+
+            if (img) {
+                img.src = imageSrc;
+                img.classList.remove('hidden');
+            } else {
+                const newImg = document.createElement('img');
+                newImg.className = 'w-full h-full object-cover';
+                newImg.src = imageSrc;
+                avatarElement.appendChild(newImg);
+            }
+
+            if (svg) svg.classList.add('hidden');
+        }
+
+        function handleBannerAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageSrc = e.target.result;
+                const bannerDisplay = document.getElementById('profileBannerAvatar');
+                const bannerImg = document.getElementById('profileBannerAvatarImg');
+
+                if (!bannerImg) {
+                    const img = document.createElement('img');
+                    img.id = 'profileBannerAvatarImg';
+                    img.className = 'w-full h-full object-cover';
+                    img.src = imageSrc;
+                    img.alt = 'Avatar';
+                    bannerDisplay.appendChild(img);
+                } else {
+                    bannerImg.src = imageSrc;
+                    bannerImg.classList.remove('hidden');
+                }
+
+                const svg = bannerDisplay.querySelector('svg');
+                if (svg) svg.classList.add('hidden');
+
+                updateAvatarElement(document.querySelector('#profileToggle .w-10.h-10.rounded-full'), imageSrc);
+                updateAvatarElement(document.querySelector('#profileDropdown .w-10.h-10.rounded-full'), imageSrc);
+            };
+            reader.readAsDataURL(file);
+        }
+
+    </script>
+</body>
+</html>
+
+
