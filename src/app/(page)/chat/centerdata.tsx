@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useState, useRef } from 'react';
-import { MessageCircle, Search, Plus, Moon, Settings, UserPlus, Info, Paperclip, Smile, Send, Sun, Check, LogOut as LogOutIcon, Trash2, X, Bell } from 'lucide-react';
+import { MessageCircle, Search, Plus, Moon, Settings, UserPlus, Info, Paperclip, Smile, Send, Sun, Check, LogOut as LogOutIcon, Trash2, X, Bell, Forward, MoreVertical, Pin } from 'lucide-react';
 import { Information } from './information';
 import { io } from "socket.io-client";
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
@@ -8,7 +8,7 @@ import { toast, Toaster } from 'sonner';
 import { Sonner } from '../../../../helper/sonner';
 
 // --- INTERFACES ---
-interface Message { id: string; text: string; sender: 'me' | 'other'; senderName?: string; timestamp: string; senderAvatar?: string; }
+interface Message { id: string; text: string; sender: 'me' | 'other'; senderName?: string; timestamp: string; senderAvatar?: string; file_url?: string; file_type?: string; file_name?: string; deleted?: boolean; deleted_for_me?: boolean; deleted_for_everyone?: boolean; forwarded_from?: any; pinned?: boolean; pinned_by?: any; }
 interface GroupChat { _id: string; title: string; users: any[]; letters?: string[]; colors?: string[]; messages?: Message[]; type: 'group'; avatar?: string; }
 interface FriendChat { id: string; name: string; status: string; letter: string; color: string; isOnline: boolean; messages: Message[]; type: 'friend'; avatar?: string; phone?: string; email?: string; }
 
@@ -187,6 +187,112 @@ const FriendRequestModal = ({ onClose, onSuccess }: { onClose: () => void, onSuc
     );
 };
 
+// --- MODAL: CHUYỂN TIẾP TIN NHẮN ---
+const ForwardModal = ({ onClose, message, friends, groups, onForward }: { 
+  onClose: () => void, 
+  message: Message | null, 
+  friends: FriendChat[], 
+  groups: GroupChat[],
+  onForward: (receiverId: string, type: 'group' | 'friend') => void 
+}) => {
+  const [selectedType, setSelectedType] = useState<'friend' | 'group'>('friend');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  if (!message) return null;
+
+  return (
+    <div className="fixed inset-0 z-[50] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in zoom-in-95">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6 relative flex flex-col max-h-[90vh]">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+        <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Chuyển tiếp tin nhắn</h3>
+        
+        {/* Preview tin nhắn */}
+        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+          <p className="text-xs text-gray-500 mb-1">Tin nhắn sẽ chuyển tiếp:</p>
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            {message.file_url && message.file_type === 'image' && (
+              <img src={message.file_url} alt="Preview" className="max-w-full h-32 object-cover rounded-lg mb-2" />
+            )}
+            {message.text && <p className="truncate">{message.text}</p>}
+            {message.file_url && message.file_type === 'file' && (
+              <p className="text-xs text-gray-500">📎 {message.file_name || "Tệp đính kèm"}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-4 border-b border-gray-200 dark:border-gray-700">
+          <button 
+            onClick={() => { setSelectedType('friend'); setSelectedId(null); }}
+            className={`px-4 py-2 font-medium text-sm ${selectedType === 'friend' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500'}`}
+          >
+            Bạn bè
+          </button>
+          <button 
+            onClick={() => { setSelectedType('group'); setSelectedId(null); }}
+            className={`px-4 py-2 font-medium text-sm ${selectedType === 'group' ? 'border-b-2 border-purple-500 text-purple-600' : 'text-gray-500'}`}
+          >
+            Nhóm
+          </button>
+        </div>
+
+        {/* Danh sách */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 mb-4">
+          {selectedType === 'friend' ? (
+            friends.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">Không có bạn bè nào</p>
+            ) : (
+              friends.map(friend => (
+                <div 
+                  key={friend.id}
+                  onClick={() => setSelectedId(friend.id)}
+                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+                    selectedId === friend.id ? 'bg-purple-100 dark:bg-purple-900/30 border border-purple-200' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <div className={`w-10 h-10 ${friend.color} rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden`}>
+                    {friend.avatar ? <img src={friend.avatar} className="w-full h-full object-cover" /> : friend.letter}
+                  </div>
+                  <span className="flex-1 font-medium text-gray-700 dark:text-gray-200">{friend.name}</span>
+                  {selectedId === friend.id && <Check className="w-5 h-5 text-purple-600" />}
+                </div>
+              ))
+            )
+          ) : (
+            groups.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">Không có nhóm nào</p>
+            ) : (
+              groups.map(group => (
+                <div 
+                  key={group._id}
+                  onClick={() => setSelectedId(group._id)}
+                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+                    selectedId === group._id ? 'bg-purple-100 dark:bg-purple-900/30 border border-purple-200' : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    {group.letters?.[0] || 'G'}
+                  </div>
+                  <span className="flex-1 font-medium text-gray-700 dark:text-gray-200">{group.title}</span>
+                  {selectedId === group._id && <Check className="w-5 h-5 text-purple-600" />}
+                </div>
+              ))
+            )
+          )}
+        </div>
+
+        <button 
+          onClick={() => selectedId && onForward(selectedId, selectedType)}
+          disabled={!selectedId}
+          className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Chuyển tiếp
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // --- SIDEBAR THÔNG TIN ---
 const ChatInfoSidebar = ({ chatData, onClose, onActionSuccess, currentUser }: { chatData: any, onClose: () => void, onActionSuccess?: () => void, currentUser: any }) => {
   const handleDeleteFriend = async () => {
@@ -214,7 +320,9 @@ const ChatInfoSidebar = ({ chatData, onClose, onActionSuccess, currentUser }: { 
   const isGroup = chatData.type === 'group';
   const myRoleInGroup = isGroup ? chatData.users?.find((u: any) => {
     const uid = u.user_id?._id || u.user_id;
-    return uid === currentUser?._id;
+    const uidStr = uid && uid.toString ? uid.toString() : uid;
+    const myIdStr = currentUser?._id && currentUser._id.toString ? currentUser._id.toString() : currentUser?._id;
+    return uidStr === myIdStr;
   })?.role : null;
   const isSuperAdmin = myRoleInGroup === 'superAdmin';
 
@@ -268,7 +376,15 @@ export const CenterData: React.FC = () => {
   const [friendsList, setFriendsList] = useState<FriendChat[]>([]);
   const [groupChats, setGroupChats] = useState<GroupChat[]>([]);
   const [friendRequestCount, setFriendRequestCount] = useState(0);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{messageId: string | null, x: number, y: number} | null>(null);
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [messageToForward, setMessageToForward] = useState<Message | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(() => { scrollToBottom(); }, [msgList]);
@@ -310,8 +426,15 @@ export const CenterData: React.FC = () => {
         const userData = dataProfile.data;
         if (userData.avatar) userData.avatar = `${userData.avatar.split('?')[0]}?v=${new Date().getTime()}`;
         setCurrentUser(userData);
+      } else if (dataProfile.code === "error") {
+        // Nếu không đăng nhập, redirect về trang login
+        if (dataProfile.Message?.includes("đăng nhập") || dataProfile.Message?.includes("Vui lòng")) {
+          window.location.href = "/";
+        }
       }
-    } catch (err) { }
+    } catch (err) {
+      console.error("Error fetching user:", err);
+    }
   };
 
   useEffect(() => { const initData = async () => { await fetchCurrentUser(); await fetchFriends(); await fetchGroups(); await fetchRequestCount(); updateStatus("online"); }; initData(); const handleBeforeUnload = () => updateStatus("offline"); window.addEventListener("beforeunload", handleBeforeUnload); return () => { window.removeEventListener("beforeunload", handleBeforeUnload); updateStatus("offline"); }; }, []);
@@ -322,9 +445,30 @@ export const CenterData: React.FC = () => {
 
     // 1. Nhận tin nhắn mới (Đã sửa tên)
     socket.on("SERVER_RETURN_MESSAGE", (data: any) => {
+      // Chỉ thêm tin nhắn nếu đang ở đúng room chat
+      const currentRoom = selectedChatType === 'group' ? selectedChat : [currentUser?._id, selectedChat].sort().join("-");
+      const messageRoom = data.room_chat_id;
+      if (messageRoom !== currentRoom) return;
+
       let senderName = "Người dùng"; let senderAvatar = "";
       if (data.sender_id && typeof data.sender_id === 'object') { senderName = data.sender_id.fullName || "Người dùng"; senderAvatar = data.sender_id.avatar || ""; }
-      const newMessage: Message = { id: data._id, text: data.content, sender: (data.sender_id._id === currentUser?._id || data.sender_id === currentUser?._id) ? 'me' : 'other', timestamp: new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), senderName: senderName, senderAvatar: senderAvatar };
+      const newMessage: Message = { 
+        id: data._id, 
+        text: data.content || "", 
+        sender: (data.sender_id._id === currentUser?._id || data.sender_id === currentUser?._id) ? 'me' : 'other', 
+        timestamp: new Date(data.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+        senderName: senderName, 
+        senderAvatar: senderAvatar,
+        file_url: data.file_url,
+        file_type: data.file_type,
+        file_name: data.file_name,
+        deleted: false,
+        deleted_for_me: false,
+        deleted_for_everyone: false,
+        forwarded_from: data.forwarded_from,
+        pinned: data.pinned || false,
+        pinned_by: data.pinned_by
+      };
       setMsgList((prev) => [...prev, newMessage]);
     });
 
@@ -350,11 +494,85 @@ export const CenterData: React.FC = () => {
         }));
     });
 
+    // 5. Nhận thông báo tin nhắn bị xóa phía bạn
+    socket.on("SERVER_MESSAGE_DELETED_FOR_ME", (data: any) => {
+        const currentRoom = selectedChatType === 'group' ? selectedChat : [currentUser?._id, selectedChat].sort().join("-");
+        if (data.room_chat_id === currentRoom && data.user_id === currentUser?._id) {
+            setMsgList(prev => prev.filter(msg => msg.id !== data.message_id));
+        }
+    });
+
+    // 6. Nhận thông báo tin nhắn bị xóa phía mọi người
+    socket.on("SERVER_MESSAGE_DELETED_FOR_EVERYONE", (data: any) => {
+        const currentRoom = selectedChatType === 'group' ? selectedChat : [currentUser?._id, selectedChat].sort().join("-");
+        if (data.room_chat_id === currentRoom) {
+            setMsgList(prev => prev.map(msg => 
+                msg.id === data.message_id ? { ...msg, deleted_for_everyone: true, text: "Tin nhắn đã được thu hồi" } : msg
+            ));
+        }
+    });
+
+    // 7. Nhận thông báo tin nhắn được ghim
+    socket.on("SERVER_MESSAGE_PINNED", (data: any) => {
+        const currentRoom = selectedChatType === 'group' ? selectedChat : [currentUser?._id, selectedChat].sort().join("-");
+        if (data.room_chat_id === currentRoom) {
+            // Reload messages để sắp xếp lại
+            const fetchHistory = async () => {
+              if (selectedChat) {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/chat/list`, {
+                  method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+                  body: JSON.stringify({ sender_id: currentUser?._id, receiver_id: selectedChat, type: selectedChatType }),
+                });
+                const data = await res.json();
+                if (data.code === "success") {
+                  const historyList = data.data.map((msg: any) => {
+                    let sName = "Người dùng"; let sAvatar = "";
+                    if (msg.sender_id && typeof msg.sender_id === 'object') { sName = msg.sender_id.fullName || "Người dùng"; sAvatar = msg.sender_id.avatar || ""; }
+                    return { 
+                      id: msg._id, 
+                      text: msg.content || "", 
+                      sender: (msg.sender_id._id === currentUser?._id || msg.sender_id === currentUser?._id) ? 'me' : 'other', 
+                      timestamp: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+                      senderName: sName, 
+                      senderAvatar: sAvatar,
+                      file_url: msg.file_url,
+                      file_type: msg.file_type,
+                      file_name: msg.file_name,
+                      deleted: msg.deleted || false,
+                      deleted_for_me: false,
+                      deleted_for_everyone: msg.deleted_for_everyone || false,
+                      forwarded_from: msg.forwarded_from,
+                      pinned: msg.pinned || false,
+                      pinned_by: msg.pinned_by
+                    };
+                  });
+                  setMsgList(historyList);
+                }
+              }
+            };
+            fetchHistory();
+        }
+    });
+
+    // 8. Nhận thông báo tin nhắn bị bỏ ghim
+    socket.on("SERVER_MESSAGE_UNPINNED", (data: any) => {
+        const currentRoom = selectedChatType === 'group' ? selectedChat : [currentUser?._id, selectedChat].sort().join("-");
+        if (data.room_chat_id === currentRoom) {
+            setMsgList(prev => prev.map(msg => 
+                msg.id === data.message_id ? { ...msg, pinned: false } : msg
+            ));
+        }
+    });
+
     return () => { 
         socket.off("SERVER_RETURN_MESSAGE"); 
         socket.off("SERVER_SEND_FRIEND_REQUEST");
         socket.off("SERVER_FRIEND_ACCEPTED");
         socket.off("SERVER_RETURN_USER_STATUS");
+        socket.off("SERVER_MESSAGE_DELETED_FOR_ME");
+        socket.off("SERVER_MESSAGE_DELETED_FOR_EVERYONE");
+        socket.off("SERVER_MESSAGE_PINNED");
+        socket.off("SERVER_MESSAGE_UNPINNED");
     };
   }, [currentUser, selectedChat]);
 
@@ -364,17 +582,239 @@ export const CenterData: React.FC = () => {
   const handleResetHome = () => { setSelectedChat(null); setSelectedChatType(null); setShowChatInfo(false); };
   const toggleDarkMode = () => { const newMode = !darkMode; setDarkMode(newMode); if (newMode) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); };
   
-  // Gửi tin nhắn (Kèm type group/friend)
+  // Gửi tin nhắn (Kèm type group/friend và file nếu có)
   const handleSendMessage = async () => { 
-    if (messageInput.trim() && selectedChat) { 
-        try { 
+    if ((messageInput.trim() || selectedFile) && selectedChat) { 
+        try {
+            const formData = new FormData();
+            formData.append("sender_id", currentUser?._id);
+            formData.append("receiver_id", selectedChat);
+            formData.append("content", messageInput || "");
+            formData.append("type", selectedChatType || "friend");
+            if (selectedFile) {
+              formData.append("file", selectedFile);
+            }
+
             await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/chat/send`, { 
-                method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", 
-                body: JSON.stringify({ sender_id: currentUser?._id, receiver_id: selectedChat, content: messageInput, type: selectedChatType }), 
+                method: "POST", 
+                credentials: "include", 
+                body: formData,
             }); 
-            setMessageInput(''); 
-        } catch (err) { } 
+            setMessageInput('');
+            setSelectedFile(null);
+            setFilePreview(null);
+        } catch (err) { 
+            toast.error("Lỗi gửi tin nhắn");
+        } 
     } 
+  };
+
+  // Thu hồi phía bạn (chỉ mình bạn không thấy)
+  const handleDeleteForMe = async (messageId: string) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/chat/delete-for-me`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ message_id: messageId }),
+      });
+      const data = await res.json();
+      if (data.code === "success") {
+        setMsgList(prev => prev.filter(msg => msg.id !== messageId));
+        toast.success("Đã xóa tin nhắn");
+        setContextMenu(null);
+      } else {
+        toast.error(data.Message);
+      }
+    } catch (err) {
+      toast.error("Lỗi xóa tin nhắn");
+    }
+  };
+
+  // Thu hồi phía mọi người (chỉ người gửi mới có thể)
+  const handleDeleteForEveryone = async (messageId: string) => {
+    if (!confirm("Bạn có chắc muốn thu hồi tin nhắn này cho mọi người?")) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/chat/delete-for-everyone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ message_id: messageId }),
+      });
+      const data = await res.json();
+      if (data.code === "success") {
+        setMsgList(prev => prev.map(msg => 
+          msg.id === messageId ? { ...msg, deleted_for_everyone: true, text: "Tin nhắn đã được thu hồi" } : msg
+        ));
+        toast.success("Đã thu hồi tin nhắn cho mọi người");
+        setContextMenu(null);
+      } else {
+        toast.error(data.Message);
+      }
+    } catch (err) {
+      toast.error("Lỗi thu hồi tin nhắn");
+    }
+  };
+
+  // Chuyển tiếp tin nhắn
+  const handleForwardMessage = (message: Message) => {
+    setMessageToForward(message);
+    setShowForwardModal(true);
+    setContextMenu(null);
+  };
+
+  // Xử lý chuyển tiếp đến người nhận đã chọn
+  const handleConfirmForward = async (receiverId: string, type: 'group' | 'friend') => {
+    if (!messageToForward) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/chat/forward`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ 
+          message_id: messageToForward.id, 
+          receiver_id: receiverId,
+          type: type
+        }),
+      });
+      const data = await res.json();
+      if (data.code === "success") {
+        toast.success("Đã chuyển tiếp tin nhắn");
+        setShowForwardModal(false);
+        setMessageToForward(null);
+      } else {
+        toast.error(data.Message);
+      }
+    } catch (err) {
+      toast.error("Lỗi chuyển tiếp tin nhắn");
+    }
+  };
+
+  // Ghim tin nhắn
+  const handlePinMessage = async (messageId: string) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/chat/pin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ message_id: messageId }),
+      });
+      const data = await res.json();
+      if (data.code === "success") {
+        toast.success("Đã ghim tin nhắn");
+        setContextMenu(null);
+        // Reload messages để hiển thị tin nhắn được ghim ở đầu
+        const fetchHistory = async () => {
+          if (selectedChat) {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/chat/list`, {
+              method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include",
+              body: JSON.stringify({ sender_id: currentUser?._id, receiver_id: selectedChat, type: selectedChatType }),
+            });
+            const data = await res.json();
+            if (data.code === "success") {
+              const historyList = data.data.map((msg: any) => {
+                let sName = "Người dùng"; let sAvatar = "";
+                if (msg.sender_id && typeof msg.sender_id === 'object') { sName = msg.sender_id.fullName || "Người dùng"; sAvatar = msg.sender_id.avatar || ""; }
+                return { 
+                  id: msg._id, 
+                  text: msg.content || "", 
+                  sender: (msg.sender_id._id === currentUser?._id || msg.sender_id === currentUser?._id) ? 'me' : 'other', 
+                  timestamp: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+                  senderName: sName, 
+                  senderAvatar: sAvatar,
+                  file_url: msg.file_url,
+                  file_type: msg.file_type,
+                  file_name: msg.file_name,
+                  deleted: msg.deleted || false,
+                  deleted_for_me: false,
+                  deleted_for_everyone: msg.deleted_for_everyone || false,
+                  forwarded_from: msg.forwarded_from,
+                  pinned: msg.pinned || false,
+                  pinned_by: msg.pinned_by
+                };
+              });
+              setMsgList(historyList);
+            }
+          }
+        };
+        fetchHistory();
+      } else {
+        toast.error(data.Message);
+      }
+    } catch (err) {
+      toast.error("Lỗi ghim tin nhắn");
+    }
+  };
+
+  // Bỏ ghim tin nhắn
+  const handleUnpinMessage = async (messageId: string) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/chat/unpin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ message_id: messageId }),
+      });
+      const data = await res.json();
+      if (data.code === "success") {
+        toast.success("Đã bỏ ghim tin nhắn");
+        setContextMenu(null);
+        setMsgList(prev => prev.map(msg => 
+          msg.id === messageId ? { ...msg, pinned: false } : msg
+        ));
+      } else {
+        toast.error(data.Message);
+      }
+    } catch (err) {
+      toast.error("Lỗi bỏ ghim tin nhắn");
+    }
+  };
+
+  // Xử lý chọn file
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      // Tạo preview cho ảnh
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFilePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setFilePreview(null);
+      }
+    }
+  };
+
+  // Xóa file đã chọn
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Đăng xuất
+  const handleLogout = async () => {
+    if (!confirm("Bạn có chắc muốn đăng xuất?")) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/login/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.code === "success") {
+        sessionStorage.clear();
+        window.location.href = "/";
+      } else {
+        toast.error(data.Message);
+      }
+    } catch (err) {
+      toast.error("Lỗi đăng xuất");
+    }
   };
   
   const onEmojiClick = (emojiData: EmojiClickData) => { setMessageInput((prev) => prev + emojiData.emoji); };
@@ -393,7 +833,23 @@ export const CenterData: React.FC = () => {
             const historyList = data.data.map((msg: any) => {
               let sName = "Người dùng"; let sAvatar = "";
               if (msg.sender_id && typeof msg.sender_id === 'object') { sName = msg.sender_id.fullName || "Người dùng"; sAvatar = msg.sender_id.avatar || ""; }
-              return { id: msg._id, text: msg.content, sender: (msg.sender_id._id === currentUser?._id || msg.sender_id === currentUser?._id) ? 'me' : 'other', timestamp: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), senderName: sName, senderAvatar: sAvatar };
+              return { 
+                id: msg._id, 
+                text: msg.content || "", 
+                sender: (msg.sender_id._id === currentUser?._id || msg.sender_id === currentUser?._id) ? 'me' : 'other', 
+                timestamp: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+                senderName: sName, 
+                senderAvatar: sAvatar,
+                file_url: msg.file_url,
+                file_type: msg.file_type,
+                file_name: msg.file_name,
+                deleted: msg.deleted || false,
+                deleted_for_me: false,
+                deleted_for_everyone: msg.deleted_for_everyone || false,
+                forwarded_from: msg.forwarded_from,
+                pinned: msg.pinned || false,
+                pinned_by: msg.pinned_by
+              };
             });
             setMsgList(historyList); scrollToBottom();
           } else { setMsgList([]); }
@@ -496,8 +952,8 @@ export const CenterData: React.FC = () => {
             </div>
             {showUserMenu && (
               <div className="absolute bottom-20 left-4 right-4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-2 z-50">
-                <button onClick={() => { setShowProfileModal(true); setShowUserMenu(false) }} className="w-full p-3 hover:bg-gray-100 rounded-xl text-left text-sm font-medium">Hồ sơ</button>
-                <button className="w-full p-3 hover:bg-gray-100 rounded-xl text-left text-sm font-medium text-red-500">Đăng xuất</button>
+                <button onClick={() => { setShowProfileModal(true); setShowUserMenu(false) }} className="w-full p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl text-left text-sm font-medium">Hồ sơ</button>
+                <button onClick={() => { handleLogout(); setShowUserMenu(false); }} className="w-full p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl text-left text-sm font-medium text-red-500">Đăng xuất</button>
               </div>
             )}
           </div>
@@ -528,27 +984,184 @@ export const CenterData: React.FC = () => {
               <button onClick={() => setShowChatInfo(!showChatInfo)} className={`p-2.5 rounded-xl transition-colors ${showChatInfo ? 'bg-purple-100 text-purple-600' : 'hover:bg-gray-100 text-gray-400 hover:text-purple-600'}`}> <Info className="w-6 h-6" /> </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8 space-y-6 z-0 custom-scrollbar">
-              {msgList.length === 0 ? (<div className="flex flex-col items-center justify-center h-full text-gray-300"> <p className="text-sm font-medium">Chưa có tin nhắn nào</p> </div>) : (msgList.map((message) => (
-                <div key={message.id} className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-                  <div className={`max-w-[70%] ${message.sender === 'me' ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
-                    {message.sender === 'other' && <span className="text-xs text-gray-500 ml-1 font-medium">{message.senderName}</span>}
-                    <div className={`px-5 py-3 shadow-sm ${message.sender === 'me' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl rounded-tr-sm' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-2xl rounded-tl-sm'}`}>
-                      <p className="text-[15px] leading-relaxed">{message.text}</p>
-                    </div>
-                    <span className="text-[10px] text-gray-300 dark:text-gray-600 px-1 font-medium">{message.timestamp}</span>
-                  </div>
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 z-0 custom-scrollbar" onClick={() => setContextMenu(null)}>
+              {msgList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-gray-300">
+                  <p className="text-sm font-medium">Chưa có tin nhắn nào</p>
                 </div>
-              )))}
+              ) : (
+                msgList.map((message) => {
+                  const isMyMessage = message.sender === 'me';
+                  const messageObj = msgList.find(m => m.id === message.id);
+                  const canDeleteForEveryone = isMyMessage && !message.deleted_for_everyone;
+                  
+                    return (
+                    <div 
+                      key={message.id} 
+                      className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300 group relative`}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        setContextMenu({ messageId: message.id, x: e.clientX, y: e.clientY });
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseEnter={() => setHoveredMessageId(message.id)}
+                      onMouseLeave={() => setHoveredMessageId(prev => (prev === message.id ? null : prev))}
+                    >
+                      <div className={`max-w-[70%] relative ${isMyMessage ? 'items-end' : 'items-start'} flex flex-col gap-1 ${message.pinned ? 'border-l-4 border-yellow-400 pl-2' : ''}`}>
+                        {message.pinned && (
+                          <div className="text-xs text-yellow-600 dark:text-yellow-400 mb-1 flex items-center gap-1 font-medium">
+                            <Pin className="w-3 h-3 fill-current" />
+                            <span>Đã ghim</span>
+                          </div>
+                        )}
+                        
+                        {message.sender === 'other' && <span className="text-xs text-gray-500 ml-1 font-medium">{message.senderName}</span>}
+                        {message.forwarded_from && (
+                          <div className="text-xs text-gray-400 mb-1 flex items-center gap-1">
+                            <Forward className="w-3 h-3" />
+                            <span>Đã chuyển tiếp</span>
+                          </div>
+                        )}
+                        <div className={`px-5 py-3 shadow-sm ${message.deleted_for_everyone ? 'opacity-50 italic' : ''} ${message.pinned ? 'bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700' : ''} ${isMyMessage ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl rounded-tr-sm' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-2xl rounded-tl-sm'}`}>
+                          {message.deleted_for_everyone ? (
+                            <p className="text-[15px] leading-relaxed text-gray-400 dark:text-gray-500 italic">Tin nhắn đã được thu hồi</p>
+                          ) : (
+                            <>
+                              {message.file_url && message.file_type === 'image' && (
+                                <div className="mb-2 rounded-lg overflow-hidden max-w-md">
+                                  <img src={message.file_url} alt="Ảnh" className="max-w-full h-auto rounded-lg" />
+                                </div>
+                              )}
+                              {message.file_url && message.file_type === 'file' && (
+                                <div className="mb-2 p-2 bg-white/20 dark:bg-gray-700/50 rounded-lg flex items-center gap-2">
+                                  <Paperclip className="w-4 h-4" />
+                                  <a href={message.file_url} target="_blank" rel="noopener noreferrer" className="text-sm underline truncate max-w-xs">
+                                    {message.file_name || "Tệp đính kèm"}
+                                  </a>
+                                </div>
+                              )}
+                              {message.text && <p className="text-[15px] leading-relaxed">{message.text}</p>}
+                            </>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-gray-300 dark:text-gray-600 px-1 font-medium">{message.timestamp}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Context Menu */}
+                      {contextMenu?.messageId === message.id && (
+                        <div 
+                          ref={contextMenuRef}
+                          className="absolute bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 py-2 z-50 min-w-[180px]"
+                          style={{ 
+                            left: isMyMessage ? 'auto' : contextMenu.x, 
+                            right: isMyMessage ? window.innerWidth - contextMenu.x : 'auto',
+                            top: contextMenu.y,
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button 
+                            onClick={() => handleForwardMessage(message)}
+                            className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+                          >
+                            <Forward className="w-4 h-4" />
+                            Chuyển tiếp
+                          </button>
+                          {message.pinned ? (
+                            <button 
+                              onClick={() => handleUnpinMessage(message.id)}
+                              className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+                            >
+                              <Pin className="w-4 h-4" />
+                              Bỏ ghim
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handlePinMessage(message.id)}
+                              className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+                            >
+                              <Pin className="w-4 h-4" />
+                              Ghim tin nhắn
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => handleDeleteForMe(message.id)}
+                            className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Xóa phía bạn
+                          </button>
+                          {/* Deleted duplicate delete/recall buttons (handled by hover toolbar) */}
+                        </div>
+                      )}
+
+                      {/* Hover Actions: show small toolbar on hover (also for mobile this will be no-op) */}
+                      {hoveredMessageId === message.id && !contextMenu && (
+                        <div className={`absolute z-40 flex items-center gap-2 ${isMyMessage ? 'right-0 -translate-x-1/2' : 'left-0 translate-x-1/2'}`} style={{ top: 6 }}>
+                          <button onClick={() => handleForwardMessage(message)} className="p-2 bg-white dark:bg-gray-800 rounded-md shadow hover:bg-gray-100" title="Chuyển tiếp">
+                            <Forward className="w-4 h-4" />
+                          </button>
+                          {message.pinned ? (
+                            <button onClick={() => handleUnpinMessage(message.id)} className="p-2 bg-white dark:bg-gray-800 rounded-md shadow hover:bg-gray-100" title="Bỏ ghim">
+                              <Pin className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <button onClick={() => handlePinMessage(message.id)} className="p-2 bg-white dark:bg-gray-800 rounded-md shadow hover:bg-gray-100" title="Ghim">
+                              <Pin className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button onClick={() => handleDeleteForMe(message.id)} className="p-2 bg-white dark:bg-gray-800 rounded-md shadow hover:bg-gray-100" title="Xóa phía bạn">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          {canDeleteForEveryone && (
+                            <button onClick={() => handleDeleteForEveryone(message.id)} className="p-2 bg-white dark:bg-gray-800 rounded-md shadow hover:bg-gray-100 text-red-500" title="Thu hồi">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
               <div ref={messagesEndRef} />
             </div>
 
             <div className="bg-white dark:bg-gray-900 p-6 z-10 relative">
               {showEmojiPicker && (<div className="absolute bottom-24 right-8 z-50 shadow-2xl rounded-xl"> <EmojiPicker onEmojiClick={onEmojiClick} theme={darkMode ? Theme.DARK : Theme.LIGHT} searchDisabled={false} width={350} height={400} /> </div>)}
+              {filePreview && (
+                <div className="mb-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center gap-2 relative">
+                  <img src={filePreview} alt="Preview" className="w-16 h-16 object-cover rounded-lg" />
+                  <span className="flex-1 text-sm text-gray-600 dark:text-gray-300 truncate">{selectedFile?.name}</span>
+                  <button onClick={handleRemoveFile} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full">
+                    <X className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+              )}
+              {selectedFile && !filePreview && (
+                <div className="mb-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center gap-2 relative">
+                  <Paperclip className="w-5 h-5 text-gray-500" />
+                  <span className="flex-1 text-sm text-gray-600 dark:text-gray-300 truncate">{selectedFile.name}</span>
+                  <button onClick={handleRemoveFile} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full">
+                    <X className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
+              )}
               <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 flex items-center gap-2 border border-gray-100 dark:border-gray-700 shadow-sm">
-                <button className="p-2 hover:bg-gray-200 rounded-xl text-gray-400"> <Paperclip className="w-5 h-5" /> </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  className="hidden" 
+                  id="file-input"
+                  accept="image/*,.pdf,.doc,.docx,.txt,.zip,.rar"
+                />
+                <label htmlFor="file-input" className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-gray-400 cursor-pointer">
+                  <Paperclip className="w-5 h-5" />
+                </label>
                 <input type="text" value={messageInput} onChange={(e) => setMessageInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} onFocus={() => setShowEmojiPicker(false)} placeholder="Nhắn tin..." className="flex-1 bg-transparent border-none focus:outline-none text-gray-800 dark:text-white px-2 py-2" />
-                <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-2 rounded-xl text-gray-400 hover:bg-gray-200"> <Smile className="w-5 h-5" /> </button>
+                <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-2 rounded-xl text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"> <Smile className="w-5 h-5" /> </button>
                 <button onClick={handleSendMessage} className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 rounded-xl shadow-md"> <Send className="w-5 h-5 text-white" /> </button>
               </div>
             </div>
@@ -562,6 +1175,15 @@ export const CenterData: React.FC = () => {
       {showCreateGroup && <CreateGroupModal onClose={() => setShowCreateGroup(false)} onSuccess={fetchGroups} friends={friendsList} />}
       {showAddFriend && <AddFriendModal onClose={() => setShowAddFriend(false)} onSuccess={fetchFriends} />}
       {showRequestModal && <FriendRequestModal onClose={() => setShowRequestModal(false)} onSuccess={fetchFriends} />}
+      {showForwardModal && messageToForward && (
+        <ForwardModal 
+          onClose={() => { setShowForwardModal(false); setMessageToForward(null); }} 
+          message={messageToForward}
+          friends={friendsList}
+          groups={groupChats}
+          onForward={handleConfirmForward}
+        />
+      )}
     </>
   );
 };

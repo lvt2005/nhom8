@@ -1,14 +1,16 @@
 "use client"
 import Link from "next/link"
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import JustValidate from 'just-validate';
 import { toast, Toaster } from 'sonner';
-import { useRouter } from "next/navigation";
 export const Login = () => {
-  const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
-  const [Remember, setRemember] = useState<boolean>(false)
+  const isSubmittingRef = useRef(false); // Dùng ref để tránh closure issue
+  
   useEffect(() => {
+    const form = document.getElementById('formLogin') as HTMLFormElement;
+    if (!form) return;
+
     const validator = new JustValidate('#formLogin');
     validator
       .addField('#email', [
@@ -27,45 +29,85 @@ export const Login = () => {
           errorMessage: "Vui lòng nhập mật khẩu!",
         },
       ])
-      .onSuccess((event: any) => {
+      .onSuccess(async (event: Event) => {
         event.preventDefault()
-        const email = event.target.email.value
-        const password = event.target.password.value
-        const remember = Remember
+        
+        // Kiểm tra nếu đang submit thì không làm gì
+        if (isSubmittingRef.current) {
+          return;
+        }
+        
+        const form = event.target as HTMLFormElement;
+        const email = (form.email as HTMLInputElement).value
+        const password = (form.password as HTMLInputElement).value
+        
+        // Lấy giá trị remember từ checkbox trực tiếp
+        const rememberCheckbox = form.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        const remember = rememberCheckbox?.checked || false;
+        
         const dataFinal = {
           email: email,
           password: password,
-          remember:remember
+          remember: remember
         }
-        if (isSubmitting) return;   // ⛔ chặn gửi nhiều lần
-        setIsSubmitting(true);      // 🔒 khoá nút
-        fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/login`, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(dataFinal)
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.code == "error") {
-              toast.error(data.Message)
-              setIsSubmitting(false); // ❗Mở lại nút khi lỗi
-            }
-            if (data.code == "success") {
-              router.push("/chat")
-              sessionStorage.setItem("code", data.code)
-              sessionStorage.setItem("message", data.Message)
-            }
-          })
-          .catch(() => setIsSubmitting(false)); // luôn mở lại nếu lỗi mạng
+        
+        // Set flag và state
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
+        
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/login`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(dataFinal)
+          });
+          
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          
+          const data = await res.json();
+          console.log("Login response:", data); // Debug log
+          
+          if (data.code === "error") {
+            toast.error(data.Message);
+            isSubmittingRef.current = false;
+            setIsSubmitting(false);
+            return;
+          }
+          
+          if (data.code === "success") {
+            toast.success(data.Message || "Đăng nhập thành công!");
+            sessionStorage.setItem("code", data.code);
+            sessionStorage.setItem("message", data.Message);
+            
+            // Sử dụng window.location.href để đảm bảo redirect hoạt động
+            setTimeout(() => {
+              window.location.href = "/chat";
+            }, 500);
+          } else {
+            toast.error(data.Message || "Đăng nhập thất bại!");
+            isSubmittingRef.current = false;
+            setIsSubmitting(false);
+          }
+        } catch (error: unknown) {
+          console.error("Login error:", error);
+          toast.error("Lỗi kết nối server, vui lòng thử lại!");
+          isSubmittingRef.current = false;
+          setIsSubmitting(false);
+        }
       });
+    
+    // Cleanup validator khi component unmount
+    return () => {
+      if (validator) {
+        validator.destroy();
+      }
+    };
   }, [])
-  const handleChange = (e: any)=>{
-    const value = e.target.checked
-    setRemember(value)
-  }
   return (
     <>
       <Toaster richColors closeButton position="top-right" />
@@ -91,7 +133,7 @@ export const Login = () => {
 
         <div className="form-options">
           <label className="checkbox-label">
-            <input type="checkbox" onChange={handleChange} />
+            <input type="checkbox" />
             <span>Ghi nhớ đăng nhập</span>
           </label>
           <Link href={"/forgotPassword"} className="forgot-link">
@@ -99,8 +141,8 @@ export const Login = () => {
           </Link>
         </div>
 
-        <button type="submit" className="auth-button">
-          Đăng Nhập
+        <button type="submit" className="auth-button" disabled={isSubmitting}>
+          {isSubmitting ? "Đang đăng nhập..." : "Đăng Nhập"}
         </button>
       </form>
     </>
