@@ -16,4 +16,5 @@ router.post("/accept-friend", user.acceptFriend); // API đồng ý kết bạn
 router.get("/friend-requests", user.getFriendRequests); // API Mới
 router.post("/remove-friend",user.removeFriend);
 router.post("/decline-friend", user.declineFriendRequest);
+router.put("/change-password", user.changePassword); // API đổi mật khẩu
 export default router

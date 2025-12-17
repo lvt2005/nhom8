@@ -7,6 +7,15 @@ router.get("/list-groups",  chatgroup.getListGroups); // API lấy danh sách nh
 // API rời nhóm
 router.post("/leave", chatgroup.leaveGroup);
 
+// Xem thành viên (tham số groupId)
+router.get("/members/:groupId", chatgroup.getGroupMembers);
+
+// Thêm thành viên (chỉ superAdmin)
+router.post("/add-member", chatgroup.addMember);
+
+// Kick thành viên (chỉ superAdmin)
+router.post("/kick-member", chatgroup.kickMember);
+
 // API xóa nhóm (giải tán)
 router.post("/delete",chatgroup.deleteGroup);
 export default router

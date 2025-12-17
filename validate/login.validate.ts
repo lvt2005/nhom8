@@ -12,22 +12,8 @@ export const login = (req: Request, res: Response, next: NextFunction) => {
       }),
     password: Joi.string()
       .required()
-      .min(8)
-      .pattern(/[A-Z]/, "uppercase")
-      .pattern(/[a-z]/, "lowercase")
-      .pattern(/\d/, "digit")
-      .pattern(/[!@#$%^&*()_+\-={}[\]|\\:;"'<>,.?~`]/, "special")
       .messages({
         "string.empty": "Vui lòng nhập mật khẩu!",
-        "string.min": "Vui lòng nhập đủ 8 kí tự!",
-        "string.pattern.name": "Mật khẩu không đúng định dạng!",
-
-        // Các case cụ thể
-        "string.pattern.base": "Mật khẩu phải chứa chữ hoa, chữ thường, số và kí tự đặc biệt!",
-        "string.pattern.uppercase": "Vui lòng nhập ít nhất một chữ cái viết hoa!",
-        "string.pattern.lowercase": "Vui lòng nhập ít nhất một chữ cái viết thường!",
-        "string.pattern.digit": "Vui lòng nhập ít nhất một số!",
-        "string.pattern.special": "Vui lòng nhập ít nhất một kí tự đặc biệt! ví dụ: !@#$%^&*",
       }),
       remember: Joi.boolean().allow("")
 
