@@ -19,7 +19,7 @@ Download: https://drive.google.com/drive/folders/1k1rzH2b5VRopvMw1H7ZyeMdncj6vV-
 
 2. Còn muốn run ide thì đây:
 
-2.1 Bố check cài đủ Node.js, npm và MySQL đang chạy đúng cấu hình.
+2.1 Check cài đủ Node.js, npm và MySQL đang chạy đúng cấu hình.
 
 2.2 Mở .env trong backend sửa cấu hình.
 
