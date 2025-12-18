@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toast, Toaster } from 'sonner';
+import { Eye, EyeOff } from 'lucide-react';
+import Link from 'next/link';
 
 // 1. Định nghĩa Interface
 interface User {
@@ -21,8 +23,10 @@ interface InformationProps {
 export const Information: React.FC<InformationProps> = ({ onClose, currentUser, onUpdateSuccess }) => {
   const [activeTab, setActiveTab] = useState<'account' | 'security'>('account');
   const [isLoading, setIsLoading] = useState(false);
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
 
-  // --- STATE & REF CHO AVATAR ---
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [previewAvatar, setPreviewAvatar] = useState<string>('');
@@ -357,36 +361,51 @@ export const Information: React.FC<InformationProps> = ({ onClose, currentUser, 
                 <div className="max-w-md mx-auto space-y-6">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mật khẩu hiện tại</label>
-                    <input
-                    type="password"
-                    id="currentPassword"
-                    value={passData.currentPassword}
-                    onChange={handlePassChange}
-                    disabled={isLoading}
-                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all"
-                    />
+                    <div className="relative">
+                      <input
+                      type={showCurrentPass ? "text" : "password"}
+                      id="currentPassword"
+                      value={passData.currentPassword}
+                      onChange={handlePassChange}
+                      disabled={isLoading}
+                      className="w-full px-4 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all"
+                      />
+                      <button type="button" onClick={() => setShowCurrentPass(!showCurrentPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                        {showCurrentPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mật khẩu mới</label>
-                    <input
-                    type="password"
-                    id="newPassword"
-                    value={passData.newPassword}
-                    onChange={handlePassChange}
-                    disabled={isLoading}
-                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all"
-                    />
+                    <div className="relative">
+                      <input
+                      type={showNewPass ? "text" : "password"}
+                      id="newPassword"
+                      value={passData.newPassword}
+                      onChange={handlePassChange}
+                      disabled={isLoading}
+                      className="w-full px-4 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all"
+                      />
+                      <button type="button" onClick={() => setShowNewPass(!showNewPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                        {showNewPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Xác nhận mật khẩu mới</label>
-                    <input
-                    type="password"
-                    id="confirmPassword"
-                    value={passData.confirmPassword}
-                    onChange={handlePassChange}
-                    disabled={isLoading}
-                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all"
-                    />
+                    <div className="relative">
+                      <input
+                      type={showConfirmPass ? "text" : "password"}
+                      id="confirmPassword"
+                      value={passData.confirmPassword}
+                      onChange={handlePassChange}
+                      disabled={isLoading}
+                      className="w-full px-4 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white transition-all"
+                      />
+                      <button type="button" onClick={() => setShowConfirmPass(!showConfirmPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                        {showConfirmPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
                 </div>
 
                 <button
@@ -397,6 +416,12 @@ export const Information: React.FC<InformationProps> = ({ onClose, currentUser, 
                 >
                     {isLoading ? "Đang xử lý..." : "Đổi mật khẩu"}
                 </button>
+                
+                <div className="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Link href="/forgotPassword" onClick={onClose} className="text-sm text-purple-600 hover:text-purple-700 dark:text-purple-400">
+                    Quên mật khẩu? Khôi phục qua email
+                  </Link>
+                </div>
                 </div>
             </div>
           </div>

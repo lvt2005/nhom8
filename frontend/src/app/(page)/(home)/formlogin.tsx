@@ -3,8 +3,10 @@ import Link from "next/link"
 import { useEffect, useState, useRef } from "react";
 import JustValidate from 'just-validate';
 import { toast, Toaster } from 'sonner';
+import { Eye, EyeOff } from 'lucide-react';
 export const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const [showPassword, setShowPassword] = useState(false)
   const isSubmittingRef = useRef(false); // Dùng ref để tránh closure issue
   
   useEffect(() => {
@@ -123,17 +125,27 @@ export const Login = () => {
 
         <div className="form-group">
           <label htmlFor="password">Mật khẩu</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Nhập mật khẩu"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              id="password"
+              name="password"
+              placeholder="Nhập mật khẩu"
+              className="w-full pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
         <div className="form-options">
           <label className="checkbox-label">
-            <input type="checkbox" />
+            <input type="checkbox" defaultChecked />
             <span>Ghi nhớ đăng nhập</span>
           </label>
           <Link href={"/forgotPassword"} className="forgot-link">

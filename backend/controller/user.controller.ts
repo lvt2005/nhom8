@@ -12,6 +12,71 @@ export const infoUser = async (req: any, res: Response) => {
         data: user
     });
 };
+
+export const getUserById = async (req: RequestAccount, res: Response) => {
+    try {
+        const myId = req.account._id;
+        const { userId } = req.params;
+        
+        const me = await account_user.findById(myId);
+        const isFriend = me?.friendsList?.some((id: any) => id.toString() === userId) || false;
+        
+        const selectFields = isFriend 
+            ? "fullName avatar phone bio _id" 
+            : "fullName avatar _id";
+        
+        const user = await account_user.findById(userId).select(selectFields);
+        
+        if (!user) {
+            return res.json({ code: "error", Message: "Không tìm thấy người dùng" });
+        }
+        
+        res.json({
+            code: "success",
+            data: { ...user.toObject(), isFriend },
+            Message: "Lấy thông tin thành công"
+        });
+    } catch (error) {
+        res.json({ code: "error", Message: "Lỗi server" });
+    }
+};
+
+export const searchAll = async (req: RequestAccount, res: Response) => {
+    try {
+        const myId = req.account._id;
+        const { query } = req.body;
+        
+        if (!query || query.trim().length < 2) {
+            return res.json({ code: "error", Message: "Vui lòng nhập ít nhất 2 ký tự" });
+        }
+        
+        const me = await account_user.findById(myId);
+        const friendIds = me?.friendsList?.map((id: any) => id.toString()) || [];
+        
+        const users = await account_user.find({
+            _id: { $ne: myId },
+            blockedBy: { $ne: myId },
+            $or: [
+                { phone: { $regex: query, $options: "i" } },
+                { fullName: { $regex: query, $options: "i" } }
+            ]
+        }).select("fullName avatar phone _id").limit(10);
+        
+        const results = users.map(u => ({
+            ...u.toObject(),
+            isFriend: friendIds.includes(u._id.toString())
+        }));
+        
+        res.json({
+            code: "success",
+            data: results,
+            Message: "Tìm kiếm thành công"
+        });
+    } catch (error) {
+        res.json({ code: "error", Message: "Lỗi server" });
+    }
+};
+
 export const getListUser = async (req: any, res: Response) => {
     try {
         // Lấy ID của mình từ req.account
@@ -97,11 +162,13 @@ export const changeStatus = async (req: RequestAccount, res: Response) => {
     // 2. QUAN TRỌNG: Bắn Socket báo cho tất cả bạn bè biết (Real-time)
     // Lưu ý: Biến _io hoặc global.io phải được khai báo ở file index.ts
     // Nếu bạn không có biến global, hãy đảm bảo logic socket nằm ở file socket riêng
-    _io.emit("SERVER_RETURN_USER_STATUS", {
+    if ((global as any)._io) {
+      (global as any)._io.emit("SERVER_RETURN_USER_STATUS", {
         userId: id,
         status: status,
-        isOnline: status === "online"
-    });
+        isOnline: status === "online",
+      });
+    }
 
     res.json({
       code: "success",
@@ -112,13 +179,14 @@ export const changeStatus = async (req: RequestAccount, res: Response) => {
     res.json({ code: "error", Message: "Lỗi server" });
   }
 };
-export const searchUser = async (req: Request, res: Response) => {
+export const searchUser = async (req: any, res: Response) => {
   try {
+    const myId = req.account._id;
     const { phone } = req.body;
-    // Tìm user có phone trùng khớp (bỏ qua chính mình nếu cần)
     const user = await account_user.findOne({ 
-        phone: phone, 
-    }).select("fullName avatar phone _id"); // Chỉ lấy thông tin cần thiết
+        phone: phone,
+        blockedBy: { $ne: myId }
+    }).select("fullName avatar phone _id");
 
     if (!user) {
       return res.json({ code: "error", Message: "Không tìm thấy người dùng với số điện thoại này." });
@@ -138,7 +206,7 @@ export const getFriendsList = async (req: RequestAccount, res: Response) => {
   try {
     const myId = req.account._id;
     // Tìm user hiện tại và populate mảng friendsList
-    const user = await account_user.findById(myId).populate('friendsList', 'fullName avatar email phone status isOnline');
+    const user = await account_user.findById(myId).populate('friendsList', 'fullName avatar email phone username status isOnline');
     
     if (!user) return res.json({ code: "error", Message: "User not found" });
 
@@ -208,14 +276,14 @@ export const requestFriend = async (req: RequestAccount, res: Response) => {
 
     // 6. GỬI SOCKET REAL-TIME
     if ((global as any)._io) {
-        (global as any)._io.emit("SERVER_SEND_FRIEND_REQUEST", { 
-            toUserId: friendId, 
-            fromUser: { 
-                _id: me._id, 
-                fullName: me.fullName, 
-                avatar: me.avatar 
-            } 
-        });
+      (global as any)._io.to(`user:${friendId}`).emit("SERVER_SEND_FRIEND_REQUEST", {
+        toUserId: friendId,
+        fromUser: {
+          _id: me._id,
+          fullName: me.fullName,
+          avatar: me.avatar
+        }
+      });
     }
 
     res.json({ code: "success", Message: "Đã gửi lời mời kết bạn!" });
@@ -243,8 +311,20 @@ export const acceptFriend = async (req: RequestAccount, res: Response) => {
             $pull: { sentRequests: myId }
         });
 
-        // 2. Bắn socket để cả 2 cập nhật danh sách bạn bè ngay lập tức
-        (global as any)._io.emit("SERVER_FRIEND_ACCEPTED", { userA: myId, userB: userId });
+        const accepter = await account_user.findById(myId).select("fullName avatar _id");
+        if ((global as any)._io) {
+          (global as any)._io.to(`user:${myId}`).emit("SERVER_FRIEND_ACCEPTED", { userA: myId, userB: userId });
+          (global as any)._io.to(`user:${userId}`).emit("SERVER_FRIEND_ACCEPTED", { userA: myId, userB: userId });
+          if (accepter) {
+            (global as any)._io.to(`user:${userId}`).emit("SERVER_FRIEND_REQUEST_ACCEPTED", {
+              byUser: {
+                _id: accepter._id,
+                fullName: accepter.fullName,
+                avatar: accepter.avatar,
+              },
+            });
+          }
+        }
 
         res.json({ code: "success", Message: "Đã trở thành bạn bè" });
     } catch (error) {
@@ -283,7 +363,8 @@ export const removeFriend = async (req: RequestAccount, res: Response) => {
 
         // Bắn socket để cập nhật frontend ngay lập tức
         if ((global as any)._io) {
-            (global as any)._io.emit("SERVER_FRIEND_REMOVED", { userA: myId, userB: friendId });
+          (global as any)._io.to(`user:${myId}`).emit("SERVER_FRIEND_REMOVED", { userA: myId, userB: friendId });
+          (global as any)._io.to(`user:${friendId}`).emit("SERVER_FRIEND_REMOVED", { userA: myId, userB: friendId });
         }
 
         res.json({ code: "success", Message: "Đã xóa bạn bè" });
@@ -350,4 +431,55 @@ export const changePassword = async (req: RequestAccount, res: Response) => {
         console.error("Lỗi changePassword:", error);
         res.json({ code: "error", Message: "Lỗi server" });
     }
+};
+
+export const blockUser = async (req: RequestAccount, res: Response) => {
+  try {
+    const myId = req.account._id;
+    const { userId, blockType } = req.body;
+
+    if (myId.toString() === userId) {
+      return res.json({ code: "error", Message: "Không thể chặn chính mình" });
+    }
+
+    await account_user.updateOne({ _id: myId }, { $addToSet: { blockedUsers: userId } });
+    await account_user.updateOne({ _id: userId }, { $addToSet: { blockedBy: myId } });
+
+    if (blockType === "full") {
+      await account_user.updateOne({ _id: myId }, { $pull: { friendsList: userId } });
+      await account_user.updateOne({ _id: userId }, { $pull: { friendsList: myId } });
+    }
+
+    if ((global as any)._io) {
+      (global as any)._io.to(`user:${userId}`).emit("SERVER_USER_BLOCKED", { blockedBy: myId });
+    }
+
+    res.json({ code: "success", Message: "Đã chặn người dùng" });
+  } catch (error) {
+    res.json({ code: "error", Message: "Lỗi server" });
+  }
+};
+
+export const unblockUser = async (req: RequestAccount, res: Response) => {
+  try {
+    const myId = req.account._id;
+    const { userId } = req.body;
+
+    await account_user.updateOne({ _id: myId }, { $pull: { blockedUsers: userId } });
+    await account_user.updateOne({ _id: userId }, { $pull: { blockedBy: myId } });
+
+    res.json({ code: "success", Message: "Đã bỏ chặn" });
+  } catch (error) {
+    res.json({ code: "error", Message: "Lỗi server" });
+  }
+};
+
+export const getBlockedUsers = async (req: RequestAccount, res: Response) => {
+  try {
+    const myId = req.account._id;
+    const user = await account_user.findById(myId).populate("blockedUsers", "fullName avatar phone");
+    res.json({ code: "success", data: user?.blockedUsers || [] });
+  } catch (error) {
+    res.json({ code: "error", Message: "Lỗi server" });
+  }
 };

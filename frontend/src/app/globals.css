@@ -16,13 +16,6 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Ẩn các loại biểu tượng Dev của Next.js */
-
-/* 1. Ẩn cái Toast báo lỗi/build (cái hình chữ N hoặc loading) */
-nextjs-portal {
-  display: none !important;
-}
-
 
 
 

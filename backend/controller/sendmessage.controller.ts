@@ -3,19 +3,17 @@ import { Request, Response } from "express";
 import { chat_history } from "../models/chathistory.models"; 
 import account_user from "../models/account_user.models";
 
-// 1. Hàm Gửi Tin Nhắn
 export const sendMessage = async (req: any, res: Response) => {
   try {
     const { sender_id, receiver_id, content, type } = req.body;
     let room_chat_id;
 
     if (type === 'group') {
-        room_chat_id = receiver_id; // Group dùng ID nhóm
+        room_chat_id = receiver_id;
     } else {
-        room_chat_id = [sender_id, receiver_id].sort().join("-"); // Friend dùng ID ghép
+        room_chat_id = [sender_id, receiver_id].sort().join("-");
     }
 
-    // Xử lý file upload nếu có
     let file_url = null;
     let file_type = null;
     let file_name = null;
@@ -23,10 +21,16 @@ export const sendMessage = async (req: any, res: Response) => {
     if (req.file) {
       file_url = req.file.path;
       file_name = req.file.originalname;
-      // Xác định loại file
       const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+      const voiceExtensions = ['webm', 'ogg', 'mp3', 'wav', 'm4a'];
       const fileExtension = req.file.originalname.split('.').pop()?.toLowerCase();
-      file_type = imageExtensions.includes(fileExtension || '') ? 'image' : 'file';
+      if (imageExtensions.includes(fileExtension || '')) {
+        file_type = 'image';
+      } else if (voiceExtensions.includes(fileExtension || '')) {
+        file_type = 'voice';
+      } else {
+        file_type = 'file';
+      }
     }
 
     const chat = new chat_history({
@@ -47,7 +51,7 @@ export const sendMessage = async (req: any, res: Response) => {
 export const getListMessage = async (req: any, res: Response) => {
   try {
     const myId = req.account._id || req.account.id;
-    const { receiver_id, type } = req.body; 
+    const { receiver_id, type, limit = 50, skip = 0 } = req.body; 
     let room_chat_id;
 
     if (type === 'group') {
@@ -56,29 +60,72 @@ export const getListMessage = async (req: any, res: Response) => {
         room_chat_id = [myId, receiver_id].sort().join("-");
     }
 
-    // Lấy tất cả tin nhắn, sau đó lọc theo deleted_for_me và deleted_for_everyone
-    // Sắp xếp: tin nhắn được ghim lên đầu, sau đó theo thời gian
+    const total = await chat_history.countDocuments({ room_chat_id, deleted_for_everyone: { $ne: true } });
+    
     const allChats = await chat_history.find({ room_chat_id })
-      .sort({ pinned: -1, createdAt: 1 })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate("sender_id", "fullName avatar")
       .populate("forwarded_from", "content file_url file_type file_name sender_id")
       .populate("forwarded_from.sender_id", "fullName avatar")
       .populate("pinned_by", "fullName");
 
-    // Lọc tin nhắn: không hiển thị nếu deleted_for_everyone hoặc deleted_for_me chứa myId
     const chats = allChats.filter(chat => {
       if (chat.deleted_for_everyone) return false;
       if (chat.deleted_for_me && chat.deleted_for_me.some((id: any) => id.toString() === myId.toString())) return false;
       return true;
-    });
+    }).reverse();
 
-    res.json({ code: "success", Message: "Lấy thành công!", data: chats });
+    res.json({ code: "success", Message: "Lấy thành công!", data: chats, total, hasMore: skip + limit < total });
   } catch (error) {
     res.json({ code: "error", Message: "Lỗi lấy tin nhắn", error });
   }
 };
 
-// 3. Hàm Thu hồi phía bạn (chỉ mình bạn không thấy)
+// 10. Hàm thả cảm xúc
+export const reactMessage = async (req: any, res: Response) => {
+  try {
+    const myId = req.account._id || req.account.id;
+    const { message_id, emoji } = req.body;
+
+    const message = await chat_history.findById(message_id);
+    if (!message) return res.json({ code: "error", Message: "Tin nhắn không tồn tại" });
+
+    if (!message.reactions) message.reactions = [] as any;
+
+    const existingIndex = message.reactions.findIndex((r: any) => r.user_id.toString() === myId.toString());
+
+    if (existingIndex > -1) {
+      if (message.reactions[existingIndex].emoji === emoji) {
+        // Toggle off if same emoji
+        message.reactions.splice(existingIndex, 1);
+      } else {
+        // Update emoji
+        message.reactions[existingIndex].emoji = emoji;
+      }
+    } else {
+      // Add new reaction
+      message.reactions.push({ user_id: myId, emoji });
+    }
+
+    await message.save();
+    
+    const updatedMessage = await chat_history.findById(message_id)
+        .populate("reactions.user_id", "fullName avatar");
+
+    req.io.emit("SERVER_RETURN_REACTION", { 
+      message_id, 
+      reactions: updatedMessage?.reactions || [],
+      room_chat_id: message.room_chat_id 
+    });
+
+    res.json({ code: "success", data: updatedMessage?.reactions });
+  } catch (e) {
+    res.json({ code: "error", Message: "Lỗi" });
+  }
+};
+
 export const deleteForMe = async (req: any, res: Response) => {
   try {
     const myId = req.account._id || req.account.id;
@@ -191,7 +238,6 @@ export const forwardMessage = async (req: any, res: Response) => {
   }
 };
 
-// 6. Hàm Ghim/Bỏ ghim tin nhắn
 export const pinMessage = async (req: any, res: Response) => {
   try {
     const myId = req.account._id || req.account.id;
@@ -202,13 +248,6 @@ export const pinMessage = async (req: any, res: Response) => {
       return res.json({ code: "error", Message: "Tin nhắn không tồn tại!" });
     }
 
-    // Bỏ ghim tin nhắn đã ghim trước đó trong cùng room
-    await chat_history.updateMany(
-      { room_chat_id: message.room_chat_id, pinned: true },
-      { pinned: false, pinnedAt: null as any, pinned_by: null as any }
-    );
-
-    // Ghim tin nhắn mới
     message.pinned = true;
     message.pinnedAt = new Date();
     message.pinned_by = myId;
@@ -218,7 +257,6 @@ export const pinMessage = async (req: any, res: Response) => {
       .populate("sender_id", "fullName avatar")
       .populate("pinned_by", "fullName");
 
-    // Gửi thông báo qua socket
     req.io.emit("SERVER_MESSAGE_PINNED", { 
       message_id: message._id, 
       room_chat_id: message.room_chat_id,
@@ -231,10 +269,8 @@ export const pinMessage = async (req: any, res: Response) => {
   }
 };
 
-// 7. Hàm Bỏ ghim tin nhắn
 export const unpinMessage = async (req: any, res: Response) => {
   try {
-    const myId = req.account._id || req.account.id;
     const { message_id } = req.body;
 
     const message = await chat_history.findById(message_id);
@@ -242,13 +278,11 @@ export const unpinMessage = async (req: any, res: Response) => {
       return res.json({ code: "error", Message: "Tin nhắn không tồn tại!" });
     }
 
-    // Bỏ ghim
     message.pinned = false;
     message.pinnedAt = null as any;
     message.pinned_by = null as any;
     await message.save();
 
-    // Gửi thông báo qua socket
     req.io.emit("SERVER_MESSAGE_UNPINNED", { 
       message_id: message._id, 
       room_chat_id: message.room_chat_id,
@@ -258,6 +292,19 @@ export const unpinMessage = async (req: any, res: Response) => {
     res.json({ code: "success", Message: "Đã bỏ ghim tin nhắn!" });
   } catch (error) {
     res.json({ code: "error", Message: "Lỗi bỏ ghim tin nhắn", error });
+  }
+};
+
+export const getPinnedMessages = async (req: any, res: Response) => {
+  try {
+    const { room_chat_id } = req.body;
+    const pinned = await chat_history.find({ room_chat_id, pinned: true })
+      .sort({ pinnedAt: -1 })
+      .populate("sender_id", "fullName avatar")
+      .populate("pinned_by", "fullName");
+    res.json({ code: "success", data: pinned });
+  } catch (error) {
+    res.json({ code: "error", Message: "Lỗi lấy tin ghim", error });
   }
 };
 

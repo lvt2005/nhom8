@@ -9,6 +9,8 @@ import index from "./router/index.route"
 import cookieParser from "cookie-parser";
 import http from "http";
 import { Server } from "socket.io";
+import account_user from "./models/account_user.models";
+
 // kêt nối CSDL
 database.connect()
 app.use(cors({
@@ -26,6 +28,28 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
     credentials: true
   }
+});
+
+const userSocketMap = new Map<string, string>();
+
+io.on("connection", (socket) => {
+  socket.on("CLIENT_JOIN", async (userId: string) => {
+    if (!userId) return;
+    socket.join(`user:${userId}`);
+    userSocketMap.set(socket.id, userId);
+    
+    await account_user.updateOne({ _id: userId }, { isOnline: true, status: "online" });
+    io.emit("SERVER_RETURN_USER_STATUS", { userId, status: "online", isOnline: true });
+  });
+
+  socket.on("disconnect", async () => {
+    const userId = userSocketMap.get(socket.id);
+    if (userId) {
+      await account_user.updateOne({ _id: userId }, { isOnline: false, status: "offline" });
+      io.emit("SERVER_RETURN_USER_STATUS", { userId, status: "offline", isOnline: false });
+      userSocketMap.delete(socket.id);
+    }
+  });
 });
 declare global {
   var _io: any;

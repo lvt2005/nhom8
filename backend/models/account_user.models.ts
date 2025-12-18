@@ -41,8 +41,21 @@ const schema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "account_user"
       }
+    ],
+
+    blockedUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "account_user"
+      }
+    ],
+
+    blockedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "account_user"
+      }
     ]
-    // --------------------------------------------------------
   }, 
   {
     timestamps: true,

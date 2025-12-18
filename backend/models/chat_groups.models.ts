@@ -4,6 +4,14 @@ const schema = new mongoose.Schema(
   {
     title: String,
     avatar: String,
+    background: {
+      type: String,
+      default: null
+    },
+    quickEmoji: {
+      type: String,
+      default: "👍"
+    },
     type: {
       type: String,
       default: "room-chat"
@@ -16,7 +24,6 @@ const schema = new mongoose.Schema(
       {
         user_id: {
             type: mongoose.Schema.Types.ObjectId,
-            // 🔥 QUAN TRỌNG: Phải khớp với tên model trong file account_user.models.ts
             ref: "account_user" 
         },
         role: {

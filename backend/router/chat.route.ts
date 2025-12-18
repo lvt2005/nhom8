@@ -14,4 +14,6 @@ router.post("/search", Message.searchMessages)
 router.post("/forward",Message.forwardMessage)
 router.post("/pin",Message.pinMessage)
 router.post("/unpin",Message.unpinMessage)
+router.post("/pinned-messages",Message.getPinnedMessages)
+router.post("/react", Message.reactMessage)
 export default router

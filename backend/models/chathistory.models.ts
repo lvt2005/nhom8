@@ -16,7 +16,7 @@ const chatSchema = new mongoose.Schema(
     },
     file_type: {
       type: String,
-      enum: ['image', 'file', null],
+      enum: ['image', 'file', 'voice', null],
       default: null,
     },
     file_name: {
@@ -56,8 +56,12 @@ const chatSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "account_user",
       default: null,
-    },
-  },
+    },    reactions: [
+      {
+        user_id: { type: mongoose.Schema.Types.ObjectId, ref: "account_user" },
+        emoji: String
+      }
+    ],  },
   {
     timestamps: true,
   }

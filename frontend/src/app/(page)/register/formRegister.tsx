@@ -1,11 +1,19 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import JustValidate from 'just-validate';
 import { toast, Toaster } from 'sonner';
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from 'lucide-react';
+
+type JustValidateFields = Record<string, { elem: HTMLInputElement }>;
+
 export const FormRegister = () => {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const isSubmittingRef = useRef(false);
+  
   useEffect(() => {
     const validator = new JustValidate('#formRegister');
     validator
@@ -83,49 +91,64 @@ export const FormRegister = () => {
           errorMessage: 'Vui lòng nhập lại mật khẩu',
         },
         {
-          validator: (value: any, field: any) => {
-            const password = field["#password"].elem.value
-            return value == password
+          validator: (value: string, fields: JustValidateFields) => {
+            const password = fields["#password"]?.elem?.value || ""
+            return value === password
           },
           errorMessage: "Mật khẩu xác thực không khớp",
         }
       ])
-      .onSuccess((event: any) => {
+      .onSuccess(async (event: SubmitEvent) => {
         event.preventDefault()
-        const fullName = event.target.fullName.value
-        const email = event.target.email.value
-        const phone = event.target.phone.value
-        const password = event.target.password.value
+        if (isSubmittingRef.current) return;
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
+        
+        const form = event.target as HTMLFormElement
+        const fullName = (form.elements.namedItem("fullName") as HTMLInputElement | null)?.value || ""
+        const email = (form.elements.namedItem("email") as HTMLInputElement | null)?.value || ""
+        const phone = (form.elements.namedItem("phone") as HTMLInputElement | null)?.value || ""
+        const password = (form.elements.namedItem("password") as HTMLInputElement | null)?.value || ""
         const dataFinal = {
           fullName: fullName,
           email: email,
           phone: phone,
           password: password,
         }
-        if (isSubmitting) return;   // ⛔ chặn gửi nhiều lần
-        setIsSubmitting(true);      // 🔒 khoá nút
-        fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/register`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(dataFinal)
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.code == "error") {
-              toast.error(data.Message)
-              setIsSubmitting(false); // ❗Mở lại nút khi lỗi
-            }
-            if (data.code == "success") {
-              router.push("/")
-              sessionStorage.setItem("code", data.code)
-              sessionStorage.setItem("message", data.Message)
-            }
-          })
-          .catch(() => setIsSubmitting(false)); // luôn mở lại nếu lỗi mạng
+        
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_DOMAIN}/register`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(dataFinal)
+          });
+          const data = await res.json();
+          if (data.code === "error") {
+            toast.error(data.Message);
+            isSubmittingRef.current = false;
+            setIsSubmitting(false);
+          }
+          if (data.code === "success") {
+            toast.success(data.Message);
+            sessionStorage.setItem("code", data.code);
+            sessionStorage.setItem("message", data.Message);
+            setTimeout(() => {
+              router.push("/");
+            }, 500);
+          }
+        } catch {
+          toast.error("Lỗi kết nối server!");
+          isSubmittingRef.current = false;
+          setIsSubmitting(false);
+        }
       });
-  }, [])
+    
+    return () => {
+      validator.destroy();
+    };
+  }, [router])
   return (
     <>
       <Toaster richColors closeButton position="top-right" />
@@ -162,26 +185,46 @@ export const FormRegister = () => {
 
         <div className="form-group">
           <label htmlFor="password">Mật khẩu</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Nhập mật khẩu"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              id="password"
+              name="password"
+              placeholder="Nhập mật khẩu"
+              className="w-full pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
         <div className="form-group">
           <label htmlFor="confirmPassword">Xác Nhận Mật Khẩu</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            placeholder="Nhập lại mật khẩu"
-          />
+          <div className="relative">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              id="confirmPassword"
+              name="confirmPassword"
+              placeholder="Nhập lại mật khẩu"
+              className="w-full pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
-        <button type="submit" className="auth-button">
-          Đăng Ký
+        <button type="submit" className="auth-button" disabled={isSubmitting}>
+          {isSubmitting ? "Đang đăng ký..." : "Đăng Ký"}
         </button>
       </form>
     </>

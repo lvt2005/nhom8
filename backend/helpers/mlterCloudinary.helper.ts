@@ -7,5 +7,11 @@ cloudinary.config({
 });
 export const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: 'chat',
+      resource_type: 'auto',
+    };
+  },
 });
 export default storage

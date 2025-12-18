@@ -1,48 +1,62 @@
 import ChatGroup from "../models/chat_groups.models";
 import { Request, Response } from "express";
 
-// API: Tạo nhóm chat mới (kèm thành viên)
 export const createGroup = async (req: any, res: Response) => {
   try {
-    const myId = req.account._id; // Lấy ID người tạo
-    const { title, userIds } = req.body; // userIds là mảng chứa id bạn bè được chọn
+    const myId = req.account._id;
+    const { title, userIds } = req.body;
 
-    // Tạo danh sách thành viên ban đầu (bao gồm người tạo là Admin)
-    const members = [
-      {
-        user_id: myId,
-        role: "superAdmin"
-      }
-    ];
+    const members = [{ user_id: myId, role: "superAdmin" }];
 
-    // Nếu có danh sách bạn bè được gửi lên, thêm họ vào nhóm
     if (userIds && Array.isArray(userIds)) {
       userIds.forEach((friendId: string) => {
-        // Chỉ thêm nếu ID khác ID người tạo (tránh trùng lặp)
         if (friendId !== myId.toString()) {
-          members.push({
-            user_id: friendId,
-            role: "user" // Thành viên bình thường
-          });
+          members.push({ user_id: friendId, role: "user" });
         }
       });
     }
 
-    const newGroup = new ChatGroup({
-      title: title,
-      type: "room-chat",
-      users: members
-    });
-
+    const newGroup = new ChatGroup({ title, type: "room-chat", users: members });
     await newGroup.save();
 
-    res.json({
-      code: "success",
-      Message: "Tạo nhóm thành công",
-      data: newGroup
-    });
+    res.json({ code: "success", Message: "Tạo nhóm thành công", data: newGroup });
   } catch (error) {
-    console.error(error);
+    res.json({ code: "error", Message: "Lỗi server" });
+  }
+};
+
+export const updateBackground = async (req: any, res: Response) => {
+  try {
+    const myId = req.account._id;
+    const { groupId, background } = req.body;
+    const group = await ChatGroup.findOne({ _id: groupId, deleted: false });
+    if (!group) return res.json({ code: "error", Message: "Nhóm không tồn tại" });
+    const isAdmin = group.users.some((u: any) => u.user_id.toString() === myId.toString() && u.role === "superAdmin");
+    if (!isAdmin) return res.json({ code: "error", Message: "Không có quyền" });
+    await ChatGroup.updateOne({ _id: groupId }, { background });
+    if ((global as any)._io) {
+      (global as any)._io.emit("SERVER_GROUP_BACKGROUND_CHANGED", { groupId, background });
+    }
+    res.json({ code: "success", Message: "Đã cập nhật", background });
+  } catch (error) {
+    res.json({ code: "error", Message: "Lỗi server" });
+  }
+};
+
+export const updateQuickEmoji = async (req: any, res: Response) => {
+  try {
+    const myId = req.account._id;
+    const { groupId, quickEmoji } = req.body;
+    const group = await ChatGroup.findOne({ _id: groupId, deleted: false });
+    if (!group) return res.json({ code: "error", Message: "Nhóm không tồn tại" });
+    const isMember = group.users.some((u: any) => u.user_id.toString() === myId.toString());
+    if (!isMember) return res.json({ code: "error", Message: "Không phải thành viên" });
+    await ChatGroup.updateOne({ _id: groupId }, { quickEmoji });
+    if ((global as any)._io) {
+      (global as any)._io.emit("SERVER_GROUP_EMOJI_CHANGED", { groupId, quickEmoji });
+    }
+    res.json({ code: "success", Message: "Đã cập nhật", quickEmoji });
+  } catch (error) {
     res.json({ code: "error", Message: "Lỗi server" });
   }
 };
@@ -76,7 +90,7 @@ export const getListGroups = async (req: any, res: Response) => {
 export const leaveGroup = async (req: any, res: Response) => {
     try {
         const myId = req.account._id;
-        const { groupId } = req.body;
+    const { groupId, transferToUserId } = req.body;
 
         const group = await ChatGroup.findOne({ _id: groupId, deleted: false });
         if (!group) return res.json({ code: "error", Message: "Nhóm không tồn tại" });
@@ -87,37 +101,50 @@ export const leaveGroup = async (req: any, res: Response) => {
 
     const leavingRole = group.users[memberIndex].role;
 
-    // Nếu người rời là superAdmin
     if (leavingRole === 'superAdmin') {
-      // Nếu chỉ có 1 thành viên (chính họ) -> giải tán nhóm
       if (group.users.length <= 1) {
         await ChatGroup.updateOne({ _id: groupId }, { deleted: true });
-        return res.json({ code: "success", Message: "Bạn đã rời và nhóm đã bị giải tán" });
+        return res.json({ code: "success", Message: "Nhóm đã bị giải tán" });
       }
 
-      // Nếu còn thành viên khác, chuyển quyền superAdmin cho thành viên đầu tiên không phải người rời
-      const newAdmin = group.users.find((u: any) => u.user_id.toString() !== myId.toString());
-      if (newAdmin) {
-        // Xóa người rời và cập nhật role của newAdmin
-        await ChatGroup.updateOne(
-          { _id: groupId },
-          {
-            $pull: { users: { user_id: myId } },
-          }
-        );
-        await ChatGroup.updateOne(
-          { _id: groupId, 'users.user_id': newAdmin.user_id },
-          { $set: { 'users.$.role': 'superAdmin' } }
-        );
-        return res.json({ code: "success", Message: "Bạn đã rời nhóm. Quyền quản trị đã được chuyển." });
+      if (!transferToUserId) {
+        return res.json({ code: "error", Message: "Trưởng nhóm cần chuyển quyền trước khi rời nhóm", reason: "need_transfer" });
       }
+
+      const target = group.users.find((u: any) => u.user_id.toString() === transferToUserId.toString());
+      if (!target) return res.json({ code: "error", Message: "Thành viên nhận quyền không tồn tại" });
+      if (transferToUserId.toString() === myId.toString()) return res.json({ code: "error", Message: "Không thể tự chuyển quyền cho chính mình" });
+
+      await ChatGroup.updateOne(
+        { _id: groupId, "users.user_id": myId },
+        { $set: { "users.$.role": "user" } }
+      );
+      await ChatGroup.updateOne(
+        { _id: groupId, "users.user_id": transferToUserId },
+        { $set: { "users.$.role": "superAdmin" } }
+      );
+
+      await ChatGroup.updateOne(
+        { _id: groupId },
+        { $pull: { users: { user_id: myId } } }
+      );
+
+      return res.json({ code: "success", Message: "Đã chuyển quyền và rời nhóm" });
     }
 
-    // Thành viên bình thường rời nhóm
     await ChatGroup.updateOne(
       { _id: groupId },
       { $pull: { users: { user_id: myId } } }
     );
+
+    const leader = group.users.find((u: any) => u.role === 'superAdmin');
+    const leaderId = leader?.user_id?.toString();
+    if (leaderId && (global as any)._io) {
+      (global as any)._io.to(`user:${leaderId}`).emit("SERVER_GROUP_MEMBER_LEFT", {
+        groupId,
+        userId: myId,
+      });
+    }
 
     res.json({ code: "success", Message: "Đã rời nhóm thành công" });
     } catch (error) {
@@ -223,6 +250,79 @@ export const kickMember = async (req: any, res: Response) => {
 
     const updated = await ChatGroup.findOne({ _id: groupId }).populate("users.user_id", "fullName avatar");
     res.json({ code: "success", data: updated, Message: "Đã kick thành viên" });
+  } catch (error) {
+    console.error(error);
+    res.json({ code: "error", Message: "Lỗi server" });
+  }
+};
+
+// API: Thêm nhiều thành viên vào nhóm (chỉ superAdmin)
+export const addMembers = async (req: any, res: Response) => {
+  try {
+    const myId = req.account._id;
+    const { groupId, userIds } = req.body;
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res.json({ code: "error", Message: "Danh sách thành viên không hợp lệ" });
+    }
+
+    const group = await ChatGroup.findOne({ _id: groupId, deleted: false });
+    if (!group) return res.json({ code: "error", Message: "Nhóm không tồn tại" });
+
+    const isAdmin = group.users.some((u: any) => u.user_id.toString() == myId.toString() && u.role === "superAdmin");
+    if (!isAdmin) return res.json({ code: "error", Message: "Bạn không có quyền thêm thành viên" });
+
+    const existing = new Set(group.users.map((u: any) => u.user_id.toString()));
+    const toAdd = userIds
+      .map((id: any) => id?.toString?.() ? id.toString() : String(id))
+      .filter((id: string) => id && !existing.has(id));
+
+    if (toAdd.length === 0) {
+      return res.json({ code: "success", Message: "Không có thành viên mới để thêm" });
+    }
+
+    await ChatGroup.updateOne(
+      { _id: groupId },
+      { $push: { users: { $each: toAdd.map((id: string) => ({ user_id: id, role: "user" })) } } }
+    );
+
+    const updated = await ChatGroup.findOne({ _id: groupId }).populate("users.user_id", "fullName avatar");
+    res.json({ code: "success", data: updated, Message: "Thêm thành viên thành công" });
+  } catch (error) {
+    console.error(error);
+    res.json({ code: "error", Message: "Lỗi server" });
+  }
+};
+
+// API: Chuyển quyền trưởng nhóm (chỉ superAdmin)
+export const transferAdmin = async (req: any, res: Response) => {
+  try {
+    const myId = req.account._id;
+    const { groupId, newAdminId } = req.body;
+
+    const group = await ChatGroup.findOne({ _id: groupId, deleted: false });
+    if (!group) return res.json({ code: "error", Message: "Nhóm không tồn tại" });
+
+    const isAdmin = group.users.some((u: any) => u.user_id.toString() == myId.toString() && u.role === "superAdmin");
+    if (!isAdmin) return res.json({ code: "error", Message: "Bạn không có quyền chuyển trưởng nhóm" });
+
+    if (!newAdminId) return res.json({ code: "error", Message: "Thiếu người nhận quyền" });
+    if (newAdminId.toString() === myId.toString()) return res.json({ code: "error", Message: "Không thể tự chuyển quyền cho chính mình" });
+
+    const target = group.users.find((u: any) => u.user_id.toString() === newAdminId.toString());
+    if (!target) return res.json({ code: "error", Message: "Thành viên nhận quyền không tồn tại" });
+
+    await ChatGroup.updateOne(
+      { _id: groupId, "users.user_id": myId },
+      { $set: { "users.$.role": "user" } }
+    );
+    await ChatGroup.updateOne(
+      { _id: groupId, "users.user_id": newAdminId },
+      { $set: { "users.$.role": "superAdmin" } }
+    );
+
+    const updated = await ChatGroup.findOne({ _id: groupId }).populate("users.user_id", "fullName avatar");
+    res.json({ code: "success", data: updated, Message: "Đã chuyển trưởng nhóm" });
   } catch (error) {
     console.error(error);
     res.json({ code: "error", Message: "Lỗi server" });
