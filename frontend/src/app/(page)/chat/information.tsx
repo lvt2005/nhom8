@@ -229,7 +229,7 @@ export const Information: React.FC<InformationProps> = ({ onClose, currentUser, 
 
                 <div className="flex-1 text-white">
                   <h3 className="text-3xl font-bold mb-1 tracking-tight">{formData.fullName || "User Một"}</h3>
-                  <p className="text-white/90 text-sm">{formData.bio || "Living life to the fullest ✨ Coffee lover ☕"}</p>
+                  <p className="text-white/90 text-sm">{formData.bio || ""}</p>
                 </div>
               </div>
               
