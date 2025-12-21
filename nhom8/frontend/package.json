@@ -1,0 +1,38 @@
+{
+  "name": "project",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@iamota/just-validate": "^4.5.2",
+    "dotenv": "^17.2.3",
+    "emoji-picker-react": "^4.16.1",
+    "just-validate": "^4.3.0",
+    "lucide-react": "^0.556.0",
+    "next": "16.0.7",
+    "nodemon": "^3.1.11",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "socket.io-client": "^4.8.1",
+    "sonner": "^2.0.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.7",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "main": "index.js",
+  "repository": "https://github.com/lvt2005/nhom8.git",
+  "author": "PhanTanThuan <phantanthuanpy2022@gmail.com>",
+  "license": "MIT"
+}
