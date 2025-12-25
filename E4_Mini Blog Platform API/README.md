@@ -208,10 +208,3 @@ npm run dev
 - `PUT /api/blogs/:id` - Cập nhật blog (yêu cầu authentication)
 - `DELETE /api/blogs/:id` - Xóa blog (yêu cầu authentication)
 
-## 👥 Tác giả
-
-Nhóm 8 - Lập trình mạng
-
-## 📄 License
-
-MIT License
